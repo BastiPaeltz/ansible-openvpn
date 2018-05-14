@@ -12,14 +12,14 @@
   set_fact:
     openvpn_server_common_name: "{{ openvpn_server_common_name_result.stdout }}"
 
-- name: OpenVPN | Revoke Client | Revoke access for {{ client }}
+- name: OpenVPN | Revoke Client | Revoke access
   expect:
-    command: ./easyrsa revoke {{ client }}@{{ openvpn_server_common_name }}
+    command: ./easyrsa revoke {{ item }}@{{ openvpn_server_common_name }}
     responses:
       'Enter pass phrase for .*?:$': "{{ ca_password }}"
     chdir: "{{ openvpn_path_easyrsa }}"
-    register: revoke_result
   no_log: true
+  with_items: "{{ clients_to_revoke }}"
 
 - name: OpenVPN | Revoke Client | Rebuild CRL
   expect:

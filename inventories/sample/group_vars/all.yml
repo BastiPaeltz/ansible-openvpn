@@ -39,7 +39,16 @@ openvpn_instances:
   #     gateway: "10.8.0.1",
   # }
 
+# Whether to show a prompt showing which clients to add and revoke before actually doing it.
+# Set this to False for non-interactive usage.
+prompt_before_syncing_clients: True
+# maintain a list of your clients here
+valid_clients:
+  - laptop
+  - phone
+
 iptables_path: "/sbin/iptables"
+# Should iptables rules be loaded or not.
 load_iptables_rules: False
 
 openvpn_path: "/etc/openvpn"

@@ -4,4 +4,4 @@
   hosts: "{{ cmd_hosts | default('openvpn') }}"
 
   roles:
-    - revoke_client
+    - revoke_clients

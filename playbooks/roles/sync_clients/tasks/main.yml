@@ -1,0 +1,49 @@
+---
+- name: OpenVPN | Sync Clients | Register the OpenVPN server common name
+  command: cat {{ openvpn_server_common_name_file }}
+  no_log: true
+  register: openvpn_server_common_name_result
+  changed_when: false
+
+- name: OpenVPN | Sync Clients | Set server common name variable
+  set_fact:
+    openvpn_server_common_name: "{{ openvpn_server_common_name_result.stdout }}"
+
+- name: OpenVPN | Sync Clients | Get clients that are currently valid
+  shell: cat {{ openvpn_path_pki }}/index.txt | awk '/^V\s/ {print $NF}' | cut -d= -f2
+  register: currently_valid_clients
+  changed_when: false
+
+- name: OpenVPN | Sync Clients | Set facts
+  set_fact:
+    currently_valid_clients: "{{ currently_valid_clients.stdout.splitlines() | map('regex_replace', '@' + openvpn_server_common_name + '$', '') | list }}"
+    desired_valid_clients: "{{ valid_clients }} + [ 'server' ]"
+    clients_to_revoke: []
+    clients_to_add: []
+
+- name: OpenVPN | Sync Clients | Sync clients that will be revoked
+  set_fact:
+    clients_to_revoke: "{{ currently_valid_clients | difference(desired_valid_clients) }}"
+
+- name: OpenVPN | Sync Clients | Sync clients that will be added
+  set_fact:
+    clients_to_add: "{{ desired_valid_clients | difference(currently_valid_clients) }}"
+
+- name: OpenVPN | Sync Clients | Ask user if we should proceed
+  pause:
+    prompt: "We will add {{ clients_to_add }} and we will revoke {{ clients_to_revoke }}. Press 'Y' or 'y' to proceed"
+  when: prompt_before_syncing_clients == True
+  register: sync_prompt
+
+- name: OpenVPN | Sync Clients | Abort if user does not want to proceed
+  fail:
+    msg: "Aborted due to user input!"
+  when: prompt_before_syncing_clients == True and sync_prompt.user_input not in ["Y", "y", "yes", "Yes"]
+
+- include_role:
+    name: add_clients
+  when: clients_to_add | length
+
+- include_role:
+    name: revoke_clients
+  when: clients_to_revoke | length

@@ -1,0 +1,7 @@
+- name: Sync desired valid clients with OpenVPN's current PKI
+# ========================================================
+  # Allows caller to override hosts using '-e cmd_hosts='
+  hosts: "{{ cmd_hosts | default('openvpn') }}"
+
+  roles:
+    - sync_clients
