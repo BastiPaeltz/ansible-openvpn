@@ -10,13 +10,13 @@
     openvpn_server_common_name: "{{ openvpn_server_common_name_result.stdout }}"
 
 - name: OpenVPN | Sync Clients | Get clients that are currently valid
-  shell: cat {{ openvpn_path_pki }}/index.txt | awk '/^V\s/ {print $NF}' | cut -d= -f2
-  register: currently_valid_clients
+  shell: awk '/^V\s/ {print $NF}' {{ openvpn_path_pki }}/index.txt | awk -F 'CN=' '{print $NF}' | awk -F '/' '{print $1}'
+  register: currently_valid_clients_out
   changed_when: false
 
 - name: OpenVPN | Sync Clients | Set facts
   set_fact:
-    currently_valid_clients: "{{ currently_valid_clients.stdout.splitlines() | map('regex_replace', '@' + openvpn_server_common_name + '$', '') | list }}"
+    currently_valid_clients: "{{ currently_valid_clients_out.stdout.splitlines() | map('regex_replace', '@' + openvpn_server_common_name + '$', '') | list }}"
     desired_valid_clients: "{{ valid_clients }} + [ 'server' ]"
     clients_to_revoke: []
     clients_to_add: []
@@ -40,10 +40,12 @@
     msg: "Aborted due to user input!"
   when: prompt_before_syncing_clients == True and sync_prompt.user_input not in ["Y", "y", "yes", "Yes"]
 
-- include_role:
+- name: OpenVPN | Sync Clients | Add clients
+  include_role:
     name: add_clients
   when: clients_to_add | length
 
-- include_role:
+- name: OpenVPN | Sync Clients | Revoke clients
+  include_role:
     name: revoke_clients
   when: clients_to_revoke | length

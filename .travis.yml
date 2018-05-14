@@ -6,23 +6,36 @@ cache: pip
 sudo: required
 
 env:
+  global:
+    - ANSIBLE_HOST_KEY_CHECKING=false
   matrix:
     - distribution: centos
       version: 7
       init: /usr/lib/systemd/systemd
       run_opts: "'--detach --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup'"
       ssh: sshd
+      ansible_extra_vars: "load_iptables_rules=True"
+      docker_concurrent_containers: "1"
     - distribution: ubuntu
       version: 16.04
       init: /sbin/init
-      #--volume=\"/tmp/$(mktemp -d):/run\"
       run_opts: "'--detach --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup'"
       ssh: ssh
+      ansible_extra_vars: ""
+      docker_concurrent_containers: "1"
     - distribution: debian
       version: 8.7
       init: /bin/systemd
       run_opts: "'--detach --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup'"
       ssh: ssh
+      ansible_extra_vars: ""
+      docker_concurrent_containers: "1"
+    - distribution: ubuntu
+      version: 16.04
+      init: /sbin/init
+      run_opts: "'--detach --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup'"
+      ssh: ssh
+      docker_concurrent_containers: "2"
 
 services:
   - docker
@@ -32,61 +45,51 @@ before_install:
   - sudo docker pull ${distribution}:${version}
   - ssh-keygen -t rsa -f /home/travis/.ssh/id_rsa -q -N ""
   - cp /home/travis/.ssh/id_rsa.pub test/id_rsa.pub
-  # Customize container
+  # Build container
   - sudo docker build --rm=true --file=test/Dockerfile.${distribution}-${version} --tag=${distribution}-${version}:ansible .
-  # Run container in detached state
-  - sudo docker run ${run_opts} ${distribution}-${version}:ansible "${init}"
 
 install:
   - sudo -H pip install ansible ansible-lint
   - sudo apt-get -y install openssl
 
 script:
-  - container_id=$(mktemp)
-  - container_ip=$(mktemp)
-
-  - sudo docker ps -q > "${container_id}"
-
-  - sudo docker exec $(cat ${container_id}) /bin/systemctl status ${ssh}.service
-
   # Ansible syntax check.
   - ansible-lint playbooks/install.yml
+  - ansible-lint playbooks/sync_clients.yml
   - ansible-lint playbooks/add_clients.yml
-  - ansible-lint playbooks/revoke_client.yml
-  - ansible-lint playbooks/audit.yml
+  - ansible-lint playbooks/revoke_clients.yml
 
-  # Get the IP of the container and add it to the inventory
-  - sudo docker inspect --format '{{ .NetworkSettings.IPAddress }}' $(cat ${container_id}) > "${container_ip}"
-  - sed -i -e 's/172\.17\.0\.2/'"$(cat ${container_ip})"'/' test/docker-inventory
+  - sudo test/docker-setup.sh
 
-  # Verify ssh connection
-  - ssh-keyscan -H $(cat ${container_ip}) >> ~/.ssh/known_hosts
-  # - ssh -vvv docker@$(cat ${container_ip}) /bin/true
+  # Create ansible vars directories
+  - mkdir test/host_vars test/group_vars
 
-  # Test role.
+  # Copy default all.yml in group_vars
+  - cp inventories/sample/group_vars/all.yml test/group_vars/all.yml
+
+  # Test role
   - ansible-playbook -i test/docker-inventory --diff playbooks/install.yml
 
-  # Test role idempotence.
+  # Test role idempotence
   - >
     ansible-playbook -i test/docker-inventory playbooks/install.yml
     | grep -q 'changed=0.*failed=0'
     && (echo 'Idempotence test: pass' && exit 0)
     || (echo 'Idempotence test: fail' && exit 1)
 
-  # Test adding a client
-  - ansible-playbook -i test/docker-inventory -e "cmd_hosts=openvpn-internet clients_to_add=cool_client" playbooks/add_clients.yml
+  # Check if ca_password got written to host_vars
+  - ls test/host_vars/*.yml
 
-  # Test removing a client
-  - ansible-playbook -i test/docker-inventory -e "cmd_hosts=openvpn-internet client=cool_client" playbooks/revoke_client.yml
+  # Test adding clients
+  - ansible-playbook -i test/docker-inventory -e "@test/ansible-vars/01_add_clients.yml" playbooks/add_clients.yml
+
+  # Test revoking a client
+  - ansible-playbook -i test/docker-inventory -e "@test/ansible-vars/02_revoke_clients.yml" playbooks/revoke_clients.yml
+
+  # Test syncing clients
+  - ansible-playbook -i test/docker-inventory -e "@test/ansible-vars/03_sync_clients.yml" playbooks/sync_clients.yml
 
   # Test adding a client using a CSR
   - openssl genrsa -out ~/test.key 2048
   - openssl req -new -sha256 -key ~/test.key -out ~/test.csr -batch -subj "/CN=test@domain.com"
-  - ansible-playbook -i test/docker-inventory -e "cmd_hosts=openvpn-internet csr_path=~/test.csr cn=test@domain.com" playbooks/add_clients.yml
-
-  # Test audit
-  - ansible-playbook -i test/docker-inventory -e "cmd_hosts=openvpn-internet" playbooks/audit.yml
-
-after_script:
-  # Clean up
-  - 'sudo docker stop "$(cat ${container_id})"'
+  - ansible-playbook -i test/docker-inventory -e "csr_path=~/test.csr cn=test@domain.com" playbooks/add_clients.yml

@@ -4,6 +4,8 @@ required_packages:
   - python-pip
   - python-virtualenv
   - git
+  # Used for the sync_clients matching
+  - gawk
   # Used to verify GPG signatures for mirrored packages
   - gnupg
   - iptables

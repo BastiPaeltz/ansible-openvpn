@@ -1,0 +1,3 @@
+clients_to_revoke:
+- testuser2_will_be_revoked
+- testuser3_will_be_revoked

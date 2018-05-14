@@ -5,11 +5,8 @@
     executable: /bin/bash
   changed_when: false
 
-# TODO try to get Ubuntu docker container working
 - name: start openvpn
   service:
     name: "openvpn@{{ item.proto }}-{{ item.port }}.service"
     state: started
   with_items: "{{ openvpn_instances }}"
-  when: (ansible_virtualization_type != "docker") or
-        (ansible_virtualization_type == "docker" and ansible_distribution not in ['Ubuntu'])

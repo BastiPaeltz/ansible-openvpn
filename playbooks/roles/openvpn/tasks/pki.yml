@@ -21,7 +21,7 @@
   shell: echo "{{ openvpn_server_common_name_manual }}" > {{ openvpn_server_common_name_file }}
   args:
     creates: "{{ openvpn_server_common_name_file }}"
-  when: openvpn_server_common_name_manual is defined  
+  when: openvpn_server_common_name_manual is defined
 
 - name: OpenVPN | PKI | Register the OpenVPN server common name
   command: cat {{ openvpn_server_common_name_file }}
@@ -35,9 +35,9 @@
   when: ca_password is not defined
 
 - name: OpenVPN | PKI | Store CA password
-  local_action: 
-    module: lineinfile 
-    line: "ca_password: {{ ca_password_result.stdout }}" 
+  local_action:
+    module: lineinfile
+    line: "ca_password: {{ ca_password_result.stdout }}"
     path: "{{ inventory_dir }}/host_vars/{{inventory_hostname}}.yml"
     create: true
   become: False

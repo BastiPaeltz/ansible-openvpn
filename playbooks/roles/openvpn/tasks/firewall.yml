@@ -11,6 +11,6 @@
     group: root
     mode: 0744
 
-- name: OpenVPN | Firewall | Load iptables rules 
-  shell: {{ openvpn_path_iptables_rules }}
+- name: OpenVPN | Firewall | Load iptables rules
+  command: "{{ openvpn_path_iptables_rules }}"
   when: load_iptables_rules == True

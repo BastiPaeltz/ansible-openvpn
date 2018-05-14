@@ -1,0 +1,5 @@
+valid_clients:
+- testuser1
+- testuser5
+
+prompt_before_syncing_clients: False

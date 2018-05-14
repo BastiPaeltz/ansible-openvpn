@@ -2,7 +2,7 @@
 
 Ansible role for installing openvpn
 
-This is a fork of [ansible-openvpn-hardened](https://github.com/bau-sec/ansible-openvpn-hardened). 
+This is a fork of [ansible-openvpn-hardened](https://github.com/bau-sec/ansible-openvpn-hardened).
 
 ansible-openvpn-hardened would set up a full server running only openvpn and thereby modifiying multiple parts of the system.
 This project however only cares about openvpn and setting it up on any server and touching only the parts that are necessary and making as few as possible assumptions about your system / not messing with your current configuration.

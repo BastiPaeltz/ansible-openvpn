@@ -17,8 +17,8 @@
 
 # Allow SSH connections on the VPN
 {% for instance in openvpn_instances %}
-{{ iptables_path }} -A INPUT -p tcp -d {{ instance.cidr }} --dport {{ ansible_port }} -j ACCEPT
+{{ iptables_path }} -A INPUT -p tcp -d {{ instance.cidr }} --dport {{ ansible_port | default('22') }} -j ACCEPT
 {% endfor %}
 
 # Consider removing SSH access from the main IPv4 address after you established a VPN connection, e.g. with:
-#{{ iptables_path }} -A INPUT -p tcp -i {{ ansible_default_ipv4.interface }} --dport {{ ansible_port }} -j DROP
+#{{ iptables_path }} -A INPUT -p tcp -i {{ ansible_default_ipv4.interface }} --dport {{ ansible_port | default('22') }} -j DROP
