@@ -18,6 +18,7 @@
     responses:
       'Enter pass phrase for .*?:$': "{{ ca_password }}"
     chdir: "{{ openvpn_path_easyrsa }}"
+    register: revoke_result
   no_log: true
 
 - name: OpenVPN | Revoke Client | Rebuild CRL
@@ -26,12 +27,3 @@
     responses:
       'Enter pass phrase for .*?:$': "{{ ca_password }}"
     chdir: "{{ openvpn_path_easyrsa }}"
-
-- name: OpenVPN | Directories | Fix CRL Permissions
-  file:
-    path: "{{ item }}"
-    state: file
-    group: openvpn
-    mode: g+r
-  with_items:
-    - "{{ openvpn_crl }}"

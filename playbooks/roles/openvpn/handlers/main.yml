@@ -5,12 +5,6 @@
     executable: /bin/bash
   changed_when: false
 
-- name: systemd tmpfiles
-  shell: systemd-tmpfiles --remove --create
-  changed_when: false
-  tags:
-    - skip_ansible_lint
-
 # TODO try to get Ubuntu docker container working
 - name: start openvpn
   service:
@@ -19,21 +13,3 @@
   with_items: "{{ openvpn_instances }}"
   when: (ansible_virtualization_type != "docker") or
         (ansible_virtualization_type == "docker" and ansible_distribution not in ['Ubuntu'])
-
-# TODO try to get Ubuntu docker container working
-- name: start dnsmasq
-  service:
-    name: dnsmasq
-    state: started
-  when: (ansible_virtualization_type != "docker") or
-        (ansible_virtualization_type == "docker" and ansible_distribution not in ['Ubuntu'])
-
-- name: New Sudo User Creds
-  local_action: template src=group_vars_openvpn-vpn.yml.j2 dest={{ playbook_dir }}/group_vars/openvpn-vpn.yml
-  become: False
-
-- name: start auditd
-  service:
-    name: auditd
-    state: started
-  when: ansible_virtualization_type != "docker"

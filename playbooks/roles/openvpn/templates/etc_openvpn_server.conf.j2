@@ -1,6 +1,5 @@
 dev tun-{{ item.proto }}-{{ item.port }}
 server {{ item.mask }}
-push "dhcp-option DNS {{ item.gateway }}"
 proto {{ item.proto }}
 port {{ item.port }}
 

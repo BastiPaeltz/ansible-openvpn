@@ -1,0 +1,61 @@
+openvpn_key_size: "2048"
+openvpn_cipher: "AES-256-CBC"
+openvpn_auth_digest: "SHA256"
+# For all available ciphers use: openvpn --show-tls
+# For all available PFS ciphers (without eliptic curve cryptography) use: openvpn --show-tls | grep -e "-DHE-"
+# Configuration here just uses PFS ciphers leveraging AES256 and at least SHA256
+openvpn_tls_cipher: "TLS-DHE-DSS-WITH-AES-256-GCM-SHA384:TLS-DHE-RSA-WITH-AES-256-GCM-SHA384:TLS-DHE-RSA-WITH-AES-256-CBC-SHA256:TLS-DHE-DSS-WITH-AES-256-CBC-SHA256"
+
+openvpn_easyrsa_version: v3.0.4
+
+# By default the DN is randomly generated and organizational mode is used.
+openvpn_key_country:  "US"
+openvpn_key_province: "California"
+openvpn_key_city: "Beverly Hills"
+openvpn_key_org: "ACME CORPORATION"
+openvpn_key_ou: "Anvil Department"
+openvpn_key_email: "user@box.com"
+
+# Set this to true to use cn_only DN mode instead.
+# Consider uncommenting and setting openvpn_server_common_name_manual as well then.
+easyrsa_dn_cn_only: false
+# openvpn_server_common_name_manual: "Company FooBar Ltd."
+
+openvpn_instances:
+  - {
+      proto: udp,
+      port: 1194,
+      mask: "10.9.0.0 255.255.255.0",
+      cidr: "10.9.0.0/24",
+      gateway: "10.9.0.1",
+  }
+  # Uncomment below to listen on TCP 443. This will look like normal SSL/TLS traffic
+  # and will be more likely to get through restrictive firewalls.
+  # - {
+  #     proto: tcp,
+  #     port: 443,
+  #     mask: "10.8.0.0 255.255.255.0",
+  #     cidr: "10.8.0.0/24",
+  #     gateway: "10.8.0.1",
+  # }
+
+iptables_path: "/sbin/iptables"
+load_iptables_rules: False
+
+openvpn_path: "/etc/openvpn"
+openvpn_path_pki: "{{ openvpn_path }}/pki"
+openvpn_path_keys: "{{ openvpn_path_pki }}/private"
+openvpn_path_certs: "{{ openvpn_path_pki }}/issued"
+openvpn_path_reqs: "{{ openvpn_path_pki }}/reqs"
+openvpn_hmac_firewall: "{{ openvpn_path_pki }}/ta.key"
+openvpn_ca_cert: "{{ openvpn_path_pki }}/ca.crt"
+openvpn_path_easyrsa: "{{ openvpn_path }}/easyrsa/easyrsa3"
+dhparams_size: "{{ openvpn_key_size }}"
+dhparams_location: "{{ openvpn_path_pki }}/dh.pem"
+openvpn_crl: "{{ openvpn_path_pki }}/crl.pem"
+openvpn_server_common_name_file: "{{ openvpn_path }}/openvpn_server_common_name"
+openvpn_path_iptables_rules: "{{ openvpn_path }}/openvpn_iptables_rules.sh"
+
+openvpn_server_remote_host: "{{ inventory_hostname }}"
+
+local_creds_folder: "{{ playbook_dir }}/../fetched_creds/{{ openvpn_server_remote_host }}"

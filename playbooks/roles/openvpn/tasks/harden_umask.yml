@@ -1,8 +1,0 @@
----
-- name: OpenVPN | Harden | Set default umask in {{ item.dest }}
-  lineinfile:
-    dest: "{{ item.dest }}"
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-    state: present
-  with_items: "{{ umask_files }}"

@@ -1,7 +1,7 @@
 - name: Add clients to OpenVPN's PKI
 # ========================================================
   # Allows caller to override hosts using '-e cmd_hosts='
-  hosts: "{{ cmd_hosts | default('openvpn-vpn') }}"
+  hosts: "{{ cmd_hosts | default('openvpn') }}"
 
   roles:
     - add_clients

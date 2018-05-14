@@ -1,31 +1,7 @@
 ---
-
 package_name_words: words
-package_name_auditd: audit
 
-path_bin_ip: /usr/sbin/ip
-path_bin_aide: /usr/sbin/aide
-path_persistent_iptables_rules: /etc/sysconfig/iptables
 path_dict: /usr/share/dict/words
-path_pam_system_auth: /etc/pam.d/system-auth
-path_pam_password_auth: /etc/pam.d/system-auth
-path_mac_config: /etc/selinux/
-path_auditd_rules: /etc/audit/rules.d/audit.rules
-path_aide_db: /var/lib/aide/aide.db.gz
-
-sudo_group: wheel
-path_grub_cfg: /boot/grub2/grub.cfg
-grub_mkconfig: grub2-mkconfig
-
-umask_files:
-  - { dest: "/etc/profile", regexp: "^umask", line: "umask 077" }
-
-deny_failed_login_auth_files:
-  - "{{ path_pam_system_auth }}"
-  - '/etc/pam.d/password-auth'
-
-deny_failed_login_account_files: "{{ deny_failed_login_auth_files }}"
-
 
 os_family_specific_pre:
   - epel-release

@@ -1,7 +1,7 @@
 client
 
 {% for instance in openvpn_instances %}
-remote {{ openvpn_server }} {{ instance.port }} {{ instance.proto }}
+remote {{ openvpn_server_remote_host }} {{ instance.port }} {{ instance.proto }}
 {% endfor %}
 
 dev tun

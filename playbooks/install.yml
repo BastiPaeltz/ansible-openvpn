@@ -1,6 +1,6 @@
 - name: Install required software, configure and harden
 # ========================================================
-  hosts: openvpn-internet
+  hosts: "{{ cmd_hosts | default('openvpn') }}"
 
 # You need a python 2 interpreter first, so skip gathering facts, then use
 # 'setup:' to get them after the python 2 interpreter has been installed.
@@ -17,14 +17,3 @@
 
   roles:
     - openvpn
-    - {role: add_clients, clients_to_add: "{{ openvpn_clients }}"}
-    - {role: audit, when: do_audit is defined and do_audit }
-
-  post_tasks:
-    - name: OpenVPN | install | Restart system after setup
-      shell: sleep 2 && shutdown -r now "Restart for OpenVPN install"
-      async: 1
-      poll: 0
-      ignore_errors: true
-      changed_when: false
-      when: ansible_virtualization_type != "docker"

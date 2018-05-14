@@ -1,7 +1,7 @@
 - name: Revoke client access
 # ========================================================
   # Allows caller to override hosts using '-e cmd_hosts='
-  hosts: "{{ cmd_hosts | default('openvpn-vpn') }}"
+  hosts: "{{ cmd_hosts | default('openvpn') }}"
 
   roles:
     - revoke_client

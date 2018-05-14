@@ -3,16 +3,14 @@
   setup:
     filter: ansible_default_ipv4*
 
-- name: OpenVPN | Firewall | Write persistent iptables rules
+- name: OpenVPN | Firewall | Write iptables rules file
   template:
     src: etc_iptables_rules.v4.j2
-    dest: "{{ path_persistent_iptables_rules }}"
+    dest: "{{ openvpn_path_iptables_rules }}"
     owner: root
     group: root
     mode: 0744
 
-- name: OpenVPN | Firewall | Enable iptables service
-  service:
-    name: iptables
-    enabled: true
-  when: ansible_os_family == "RedHat"
+- name: OpenVPN | Firewall | Load iptables rules 
+  shell: {{ openvpn_path_iptables_rules }}
+  when: load_iptables_rules == True

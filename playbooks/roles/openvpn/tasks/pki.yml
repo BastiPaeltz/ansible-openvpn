@@ -15,6 +15,13 @@
   shell: grep -v -P "[\x80-\xFF]" {{ path_dict }} | sed -e "s/'//" | shuf -n 2 | xargs | sed -e 's/ /./g' | cut -c 1-64 > {{ openvpn_server_common_name_file }}
   args:
     creates: "{{ openvpn_server_common_name_file }}"
+  when: openvpn_server_common_name_manual is not defined
+
+- name: OpenVPN | PKI | Set server common name
+  shell: echo "{{ openvpn_server_common_name_manual }}" > {{ openvpn_server_common_name_file }}
+  args:
+    creates: "{{ openvpn_server_common_name_file }}"
+  when: openvpn_server_common_name_manual is defined  
 
 - name: OpenVPN | PKI | Register the OpenVPN server common name
   command: cat {{ openvpn_server_common_name_file }}
@@ -28,7 +35,11 @@
   when: ca_password is not defined
 
 - name: OpenVPN | PKI | Store CA password
-  local_action: template src=group_vars_all.yml.j2 dest={{ playbook_dir }}/group_vars/all.yml
+  local_action: 
+    module: lineinfile 
+    line: "ca_password: {{ ca_password_result.stdout }}" 
+    path: "{{ inventory_dir }}/host_vars/{{inventory_hostname}}.yml"
+    create: true
   become: False
   when: ca_password is not defined
 
