@@ -1,3 +1,28 @@
+# ansible-openvpn
+
+Ansible role for installing openvpn
+
+This is a fork of [ansible-openvpn-hardened](https://github.com/bau-sec/ansible-openvpn-hardened). 
+
+ansible-openvpn-hardened would set up a full server running only openvpn and thereby modifiying multiple parts of the system.
+This project however only cares about openvpn and setting it up on any server and touching only the parts that are necessary and making as few as possible assumptions about your system / not messing with your current configuration.
+
+In detail the current changes are:
+- removed hardening and audit parts
+- removed package upgrade and periodical update
+- removed dnsmasq
+- modified firewall tasks and removed server reboot
+- running openvpn as root instead of openvpn user
+- added multi-host support by modifiying variable loading and inventory
+structure
+- added possibility to set DN manually
+
+## More docs coming soon!
+
+
+Original README below:
+____________________________
+
 # Overview [![Build Status](https://travis-ci.org/bau-sec/ansible-openvpn-hardened.svg?branch=master)](https://travis-ci.org/bau-sec/ansible-openvpn-hardened)
 *ansible-openvpn-hardened* is an [*Ansible*](http://www.ansible.com/home) playbook written to create and manage a hardened OpenVPN server instance in the cloud or locally. The created instance is configured for use as a tunnel for internet traffic allowing more secure internet access when using public WiFi or other untrusted networks. With this setup you don't have to trust or pay a shady VPN service; you control your data and the security of the VPN.
 
