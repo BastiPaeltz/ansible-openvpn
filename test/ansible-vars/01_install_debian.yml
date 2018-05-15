@@ -1,4 +1,4 @@
-easyrsa_dn_cn_only: true
+easyrsa_dn_mode_cn_only: True
 openvpn_server_common_name_manual: "Company Foo Ltd.test"
 
 clients_to_add:

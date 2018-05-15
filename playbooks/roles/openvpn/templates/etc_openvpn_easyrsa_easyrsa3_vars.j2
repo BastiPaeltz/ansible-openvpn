@@ -72,7 +72,7 @@ fi
 # Choices are:
 #   cn_only  - use just a CN value
 #   org      - use the "traditional" Country/Province/City/Org/OU/email/CN format
-{% if easyrsa_dn_cn_only %}
+{% if easyrsa_dn_mode_cn_only %}
 set_var EASYRSA_DN "cn_only"
 {% else %}
 set_var EASYRSA_DN "org"

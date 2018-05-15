@@ -38,13 +38,13 @@
 
 - name: OpenVPN | Add Clients | Build Clients
   expect:
-    command: ./easyrsa build-client-full {{ item[0] }}@{{ openvpn_server_common_name }} --req-cn {{ item[0] }}@{{ openvpn_server_common_name }}
+    command: ./easyrsa build-client-full {{ item[0] }} --req-cn {{ item[0] }}
     responses:
       'Enter PEM pass phrase:$': "{{ item[1].stdout }}"
       'Verifying - Enter PEM pass phrase:$': "{{ item[1].stdout }}"
       'Enter pass phrase for .*?:$': "{{ ca_password }}"
     chdir: "{{ openvpn_path_easyrsa }}"
-    creates: "{{ openvpn_path_keys }}/{{ item[0] }}@{{ openvpn_server_common_name }}.key"
+    creates: "{{ openvpn_path_keys }}/{{ item[0] }}.key"
   no_log: true
   with_together:
     - "{{ clients_to_add }}"
@@ -69,14 +69,14 @@
   changed_when: false
 
 - name: OpenVPN | Add Clients | Register client key contents
-  command: cat {{ openvpn_path_keys }}/{{ item }}@{{ openvpn_server_common_name }}.key
+  command: cat {{ openvpn_path_keys }}/{{ item }}.key
   with_items: "{{ clients_to_add }}"
   no_log: true
   register: openvpn_client_keys
   changed_when: false
 
 - name: OpenVPN | Add Clients | Register client certificate contents
-  command: cat {{ openvpn_path_certs }}/{{ item }}@{{ openvpn_server_common_name }}.crt
+  command: cat {{ openvpn_path_certs }}/{{ item }}.crt
   with_items: "{{ clients_to_add }}"
   no_log: true
   register: openvpn_client_certs
@@ -85,7 +85,7 @@
 - name: OpenVPN | Add Clients | Build client configs (.ovpn files; pki embedded)
   template:
     src: client_pki_embedded.ovpn.j2
-    dest: "{{ openvpn_path_pki }}/ovpn/{{ item[0] }}@{{ openvpn_server_common_name }}-pki-embedded.ovpn"
+    dest: "{{ openvpn_path_pki }}/ovpn/{{ item[0] }}-pki-embedded.ovpn"
     mode: 0400
   no_log: true
   with_together:
@@ -96,7 +96,7 @@
 - name: OpenVPN | Add Clients | Build client configs (.ovpn files; pki external files)
   template:
     src: client_pki_files.ovpn.j2
-    dest: "{{ openvpn_path_pki }}/ovpn/{{ item }}@{{ openvpn_server_common_name }}-pki-files.ovpn"
+    dest: "{{ openvpn_path_pki }}/ovpn/{{ item }}-pki-files.ovpn"
     mode: 0400
   no_log: true
   with_items:
@@ -105,7 +105,7 @@
 - name: OpenVPN | Add Clients | Build client configs (.ovpn files; external pkcs12)
   template:
     src: client_pkcs12.ovpn.j2
-    dest: "{{ openvpn_path_pki }}/ovpn/{{ item }}@{{ openvpn_server_common_name }}-pkcs12.ovpn"
+    dest: "{{ openvpn_path_pki }}/ovpn/{{ item }}-pkcs12.ovpn"
     mode: 0400
   no_log: true
   with_items:
@@ -114,15 +114,15 @@
 - name: OpenVPN | Add Clients | Generate PKCS#12
   shell: >
     openssl pkcs12 -export
-    -in {{ openvpn_path_certs }}/{{ item[0] }}@{{ openvpn_server_common_name }}.crt
-    -inkey {{ openvpn_path_keys }}/{{ item[0] }}@{{ openvpn_server_common_name }}.key
+    -in {{ openvpn_path_certs }}/{{ item[0] }}.crt
+    -inkey {{ openvpn_path_keys }}/{{ item[0] }}.key
     -certfile {{ openvpn_ca_cert }}
     -name {{ item[0] }}
-    -out {{ openvpn_path_pki }}/ovpn/{{ item[0] }}@{{ openvpn_server_common_name }}.p12
+    -out {{ openvpn_path_pki }}/ovpn/{{ item[0] }}.p12
     -passin pass:{{ item[1].stdout }}
     -passout pass:{{ item[1].stdout }}
   args:
-    creates: "{{ openvpn_path_pki }}/ovpn/{{ item[0] }}@{{ openvpn_server_common_name }}.p12"
+    creates: "{{ openvpn_path_pki }}/ovpn/{{ item[0] }}.p12"
   no_log: true
   with_together:
     - "{{ clients_to_add }}"
@@ -132,7 +132,7 @@
 
 - name: OpenVPN | Add Clients | Get .ovpn files (*-pki-embedded.ovpn)
   fetch:
-    src: "{{ openvpn_path_pki }}/ovpn/{{ item }}@{{ openvpn_server_common_name }}-pki-embedded.ovpn"
+    src: "{{ openvpn_path_pki }}/ovpn/{{ item }}-pki-embedded.ovpn"
     dest: "{{ local_creds_folder }}/{{ item }}/"
     flat: yes
   with_items:
@@ -140,7 +140,7 @@
 
 - name: OpenVPN | Add Clients | Get .ovpn files (*-pki-files.ovpn)
   fetch:
-    src: "{{ openvpn_path_pki }}/ovpn/{{ item }}@{{ openvpn_server_common_name }}-pki-files.ovpn"
+    src: "{{ openvpn_path_pki }}/ovpn/{{ item }}-pki-files.ovpn"
     dest: "{{ local_creds_folder }}/{{ item }}/"
     flat: yes
   with_items:
@@ -148,7 +148,7 @@
 
 - name: OpenVPN | Add Clients | Get .ovpn files (*-pkcs12.ovpn)
   fetch:
-    src: "{{ openvpn_path_pki }}/ovpn/{{ item }}@{{ openvpn_server_common_name }}-pkcs12.ovpn"
+    src: "{{ openvpn_path_pki }}/ovpn/{{ item }}-pkcs12.ovpn"
     dest: "{{ local_creds_folder }}/{{ item }}/"
     flat: yes
   with_items:
@@ -156,7 +156,7 @@
 
 - name: OpenVPN | Add Clients | Get client PKCS#12 files
   fetch:
-    src: "{{ openvpn_path_pki }}/ovpn/{{ item }}@{{ openvpn_server_common_name }}.p12"
+    src: "{{ openvpn_path_pki }}/ovpn/{{ item }}.p12"
     dest: "{{ local_creds_folder }}/{{ item }}/"
     flat: yes
   with_items:
@@ -172,7 +172,7 @@
 
 - name: OpenVPN | Add Clients | Get client certs
   fetch:
-    src: "{{ openvpn_path_certs }}/{{ item }}@{{ openvpn_server_common_name }}.crt"
+    src: "{{ openvpn_path_certs }}/{{ item }}.crt"
     dest: "{{ local_creds_folder }}/{{ item }}/"
     flat: yes
   with_items:
@@ -180,7 +180,7 @@
 
 - name: OpenVPN | Add Clients | Get client keys
   fetch:
-    src: "{{ openvpn_path_keys }}/{{ item }}@{{ openvpn_server_common_name }}.key"
+    src: "{{ openvpn_path_keys }}/{{ item }}.key"
     dest: "{{ local_creds_folder }}/{{ item }}/"
     flat: yes
   with_items:

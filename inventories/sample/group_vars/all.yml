@@ -18,7 +18,7 @@ openvpn_key_email: "user@box.com"
 
 # Set this to true to use cn_only DN mode instead.
 # Consider uncommenting and setting openvpn_server_common_name_manual as well then.
-easyrsa_dn_cn_only: false
+easyrsa_dn_mode_cn_only: false
 # openvpn_server_common_name_manual: "Company FooBar Ltd."
 
 openvpn_instances:
