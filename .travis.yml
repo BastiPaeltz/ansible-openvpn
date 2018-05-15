@@ -14,21 +14,18 @@ env:
       init: /usr/lib/systemd/systemd
       run_opts: "'--detach --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup'"
       ssh: sshd
-      ansible_extra_vars: "load_iptables_rules=True"
       docker_concurrent_containers: "1"
     - distribution: ubuntu
       version: 16.04
       init: /sbin/init
       run_opts: "'--detach --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup'"
       ssh: ssh
-      ansible_extra_vars: ""
       docker_concurrent_containers: "1"
     - distribution: debian
       version: 8.7
       init: /bin/systemd
       run_opts: "'--detach --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup'"
       ssh: ssh
-      ansible_extra_vars: ""
       docker_concurrent_containers: "1"
     - distribution: ubuntu
       version: 16.04
@@ -68,7 +65,7 @@ script:
   - cp inventories/sample/group_vars/all.yml test/group_vars/all.yml
 
   # Test role
-  - ansible-playbook -i test/docker-inventory --diff playbooks/install.yml
+  - ansible-playbook -i test/docker-inventory -e "@test/ansible-vars/01_install_${distribution}.yml" --diff playbooks/install.yml
 
   # Test role idempotence
   - >
@@ -77,17 +74,17 @@ script:
     && (echo 'Idempotence test: pass' && exit 0)
     || (echo 'Idempotence test: fail' && exit 1)
 
-  # Check if ca_password got written to host_vars
-  - ls test/host_vars/*.yml
+  # Check if ca_password(s) got written to host_vars
+  - if [ $(ls -l test/host_vars/*.yml | wc -l) -ne $docker_concurrent_containers ];then echo "Not all ca passwords written to host_vars" && exit 1;fi
 
   # Test adding clients
-  - ansible-playbook -i test/docker-inventory -e "@test/ansible-vars/01_add_clients.yml" playbooks/add_clients.yml
+  - ansible-playbook -i test/docker-inventory -e "@test/ansible-vars/02_add_clients.yml" playbooks/add_clients.yml
 
   # Test revoking a client
-  - ansible-playbook -i test/docker-inventory -e "@test/ansible-vars/02_revoke_clients.yml" playbooks/revoke_clients.yml
+  - ansible-playbook -i test/docker-inventory -e "@test/ansible-vars/03_revoke_clients.yml" playbooks/revoke_clients.yml
 
   # Test syncing clients
-  - ansible-playbook -i test/docker-inventory -e "@test/ansible-vars/03_sync_clients.yml" playbooks/sync_clients.yml
+  - ansible-playbook -i test/docker-inventory -e "@test/ansible-vars/04_sync_clients.yml" playbooks/sync_clients.yml
 
   # Test adding a client using a CSR
   - openssl genrsa -out ~/test.key 2048
