@@ -1,8 +1,2 @@
 easyrsa_dn_mode_cn_only: True
 openvpn_server_common_name_manual: "Company Foo Ltd.test"
-
-clients_to_add:
-- testuser1
-- testuser2_will_be_revoked
-- testuser3_will_be_revoked
-- testuser4_will_be_revoked_by_sync

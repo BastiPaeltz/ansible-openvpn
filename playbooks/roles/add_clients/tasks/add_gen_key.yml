@@ -1,6 +1,6 @@
 ---
 - name: OpenVPN | Add Clients | Check for existing private key passwords
-  local_action: stat path={{ local_creds_folder }}/{{ item }}/{{ openvpn_server_common_name }}_pk_pass.txt
+  local_action: stat path="{{ local_creds_folder }}/{{ item }}/{{ openvpn_server_common_name }}_pk_pass.txt"
   become: False
   register: client_pk_passwords_local
   with_items:
@@ -20,7 +20,7 @@
     - "{{ clients_to_add }}"
 
 - name: OpenVPN | Add Clients | Write private key pass phrases
-  local_action: copy content={{ item[1].stdout }} dest={{ local_creds_folder }}/{{ item[0] }}/{{ openvpn_server_common_name }}_pk_pass.txt
+  local_action: copy content={{ item[1].stdout }} dest="{{ local_creds_folder }}/{{ item[0] }}/{{ openvpn_server_common_name }}_pk_pass.txt"
   no_log: true
   become: False
   with_together:
@@ -29,7 +29,7 @@
   when: "client_pk_passwords_local.results[0].stat.exists == False"
 
 - name: OpenVPN | Add Clients | Read private key pass phrases
-  local_action: command cat {{ local_creds_folder }}/{{ item }}/{{ openvpn_server_common_name }}_pk_pass.txt
+  local_action: command cat "{{ local_creds_folder }}/{{ item }}/{{ openvpn_server_common_name }}_pk_pass.txt"
   no_log: true
   become: False
   register: client_pk_passwords
@@ -38,7 +38,7 @@
 
 - name: OpenVPN | Add Clients | Build Clients
   expect:
-    command: ./easyrsa build-client-full {{ item[0] }} --req-cn {{ item[0] }}
+    command: ./easyrsa build-client-full "{{ item[0] }}" --req-cn "{{ item[0] }}"
     responses:
       'Enter PEM pass phrase:$': "{{ item[1].stdout }}"
       'Verifying - Enter PEM pass phrase:$': "{{ item[1].stdout }}"
@@ -69,14 +69,14 @@
   changed_when: false
 
 - name: OpenVPN | Add Clients | Register client key contents
-  command: cat {{ openvpn_path_keys }}/{{ item }}.key
+  command: cat "{{ openvpn_path_keys }}/{{ item }}.key"
   with_items: "{{ clients_to_add }}"
   no_log: true
   register: openvpn_client_keys
   changed_when: false
 
 - name: OpenVPN | Add Clients | Register client certificate contents
-  command: cat {{ openvpn_path_certs }}/{{ item }}.crt
+  command: cat "{{ openvpn_path_certs }}/{{ item }}.crt"
   with_items: "{{ clients_to_add }}"
   no_log: true
   register: openvpn_client_certs
@@ -114,11 +114,11 @@
 - name: OpenVPN | Add Clients | Generate PKCS#12
   shell: >
     openssl pkcs12 -export
-    -in {{ openvpn_path_certs }}/{{ item[0] }}.crt
-    -inkey {{ openvpn_path_keys }}/{{ item[0] }}.key
+    -in "{{ openvpn_path_certs }}/{{ item[0] }}.crt"
+    -inkey "{{ openvpn_path_keys }}/{{ item[0] }}.key"
     -certfile {{ openvpn_ca_cert }}
-    -name {{ item[0] }}
-    -out {{ openvpn_path_pki }}/ovpn/{{ item[0] }}.p12
+    -name "{{ item[0] }}"
+    -out "{{ openvpn_path_pki }}/ovpn/{{ item[0] }}.p12"
     -passin pass:{{ item[1].stdout }}
     -passout pass:{{ item[1].stdout }}
   args:

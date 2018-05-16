@@ -14,25 +14,25 @@ env:
       init: /usr/lib/systemd/systemd
       run_opts: "'--detach --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup'"
       ssh: sshd
-      docker_concurrent_containers: "1"
+      docker_concurrent_containers: 1
     - distribution: ubuntu
       version: 16.04
       init: /sbin/init
       run_opts: "'--detach --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup'"
       ssh: ssh
-      docker_concurrent_containers: "1"
+      docker_concurrent_containers: 1
     - distribution: debian
       version: 8.7
       init: /bin/systemd
       run_opts: "'--detach --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup'"
       ssh: ssh
-      docker_concurrent_containers: "1"
+      docker_concurrent_containers: 1
     - distribution: ubuntu
       version: 16.04
       init: /sbin/init
       run_opts: "'--detach --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup'"
       ssh: ssh
-      docker_concurrent_containers: "2"
+      docker_concurrent_containers: 2
 
 services:
   - docker
@@ -69,7 +69,7 @@ script:
 
   # Test role idempotence
   - >
-    ansible-playbook -i test/docker-inventory playbooks/install.yml
+    ansible-playbook -i test/docker-inventory -e "@test/ansible-vars/01_install_${distribution}.yml" playbooks/install.yml
     | grep -q 'changed=0.*failed=0'
     && (echo 'Idempotence test: pass' && exit 0)
     || (echo 'Idempotence test: fail' && exit 1)

@@ -6,7 +6,7 @@ openvpn_auth_digest: "SHA256"
 # Configuration here just uses PFS ciphers leveraging AES256 and at least SHA256
 openvpn_tls_cipher: "TLS-DHE-DSS-WITH-AES-256-GCM-SHA384:TLS-DHE-RSA-WITH-AES-256-GCM-SHA384:TLS-DHE-RSA-WITH-AES-256-CBC-SHA256:TLS-DHE-DSS-WITH-AES-256-CBC-SHA256"
 
-openvpn_easyrsa_version: v3.0.4
+openvpn_easyrsa_version: v3.0.3
 
 # By default the DN is randomly generated and organizational mode is used.
 openvpn_key_country:  "US"

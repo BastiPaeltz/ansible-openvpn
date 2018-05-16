@@ -10,7 +10,7 @@
     openvpn_server_common_name: "{{ openvpn_server_common_name_result.stdout }}"
 
 - name: OpenVPN | Sync Clients | Get clients that are currently valid
-  shell: awk '/^V\s/ {print $NF}' {{ openvpn_path_pki }}/index.txt | awk -F 'CN=' '{print $NF}' | awk -F '/' '{print $1}'
+  shell: awk '/^V\s/' {{ openvpn_path_pki }}/index.txt | awk -F 'CN=' '{print $NF}' | awk -F '/' '{print $1}'
   register: currently_valid_clients_out
   changed_when: false
 

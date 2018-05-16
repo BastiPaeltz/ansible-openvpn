@@ -82,7 +82,7 @@
 
 - name: OpenVPN | PKI | Build CA
   expect:
-    command: ./easyrsa build-ca --req-cn ca@{{ openvpn_server_common_name }}
+    command: ./easyrsa build-ca --req-cn "ca@{{ openvpn_server_common_name }}"
     responses:
       'Enter PEM pass phrase:$': "{{ ca_password }}"
       'Verifying - Enter PEM pass phrase:$': "{{ ca_password }}"
@@ -99,7 +99,7 @@
 
 - name: OpenVPN | PKI | Add server
   expect:
-    command: ./easyrsa build-server-full server@{{ openvpn_server_common_name }} nopass --req-cn server@{{ openvpn_server_common_name }}
+    command: ./easyrsa build-server-full "server@{{ openvpn_server_common_name }}" nopass --req-cn "server@{{ openvpn_server_common_name }}"
     responses:
       'Enter pass phrase for .*?:$': "{{ ca_password }}"
     chdir: "{{ openvpn_path_easyrsa }}"

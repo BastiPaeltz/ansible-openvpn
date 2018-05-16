@@ -14,3 +14,4 @@
 - name: OpenVPN | Firewall | Load iptables rules
   command: "{{ openvpn_path_iptables_rules }}"
   when: load_iptables_rules == True
+  changed_when: false

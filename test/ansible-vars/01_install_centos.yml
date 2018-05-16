@@ -1,7 +1,1 @@
 load_iptables_rules: True
-
-clients_to_add:
-- testuser1
-- testuser2_will_be_revoked
-- testuser3_will_be_revoked
-- testuser4_will_be_revoked_by_sync

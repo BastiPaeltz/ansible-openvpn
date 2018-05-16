@@ -15,7 +15,7 @@ do
     container_ip=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${container_id})
     echo "container_ip is $container_ip"
     #docker exec ${container_id} /bin/systemctl status ${ssh}.service
-    docker ps -a
+    docker ps
 
     # Get the IP of the container and add it to the inventory
     echo "${container_ip} ansible_user=docker ansible_become=yes ansible_become_pass=password" >> test/docker-inventory
