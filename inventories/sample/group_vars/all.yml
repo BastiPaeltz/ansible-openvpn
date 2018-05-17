@@ -42,7 +42,8 @@ openvpn_instances:
 # Whether to show a prompt showing which clients to add and revoke before actually doing it.
 # Set this to False for non-interactive usage.
 prompt_before_syncing_clients: True
-# maintain a list of your clients here
+
+# maintain a list of your valid_clients here, used by the sync_clients.yml playbook
 valid_clients:
   - laptop
   - phone
