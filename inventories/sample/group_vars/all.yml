@@ -1,20 +1,10 @@
-openvpn_key_size: "2048"
-openvpn_cipher: "AES-256-CBC"
-openvpn_auth_digest: "SHA256"
-# For all available ciphers use: openvpn --show-tls
-# For all available PFS ciphers (without eliptic curve cryptography) use: openvpn --show-tls | grep -e "-DHE-"
-# Configuration here just uses PFS ciphers leveraging AES256 and at least SHA256
-openvpn_tls_cipher: "TLS-DHE-DSS-WITH-AES-256-GCM-SHA384:TLS-DHE-RSA-WITH-AES-256-GCM-SHA384:TLS-DHE-RSA-WITH-AES-256-CBC-SHA256:TLS-DHE-DSS-WITH-AES-256-CBC-SHA256"
-
-openvpn_easyrsa_version: v3.0.3
-
 # By default the DN is randomly generated and organizational mode is used.
 openvpn_key_country:  "US"
 openvpn_key_province: "California"
 openvpn_key_city: "Beverly Hills"
 openvpn_key_org: "ACME CORPORATION"
 openvpn_key_ou: "Anvil Department"
-openvpn_key_email: "user@box.com"
+openvpn_key_email: "user@example.com"
 
 # Set this to true to use cn_only DN mode instead.
 # Consider uncommenting and setting openvpn_server_common_name_manual as well then.
@@ -39,18 +29,24 @@ openvpn_instances:
   #     gateway: "10.8.0.1",
   # }
 
-# Whether to show a prompt showing which clients to add and revoke before actually doing it.
-# Set this to False for non-interactive usage.
-prompt_before_syncing_clients: True
+# Whether sync_clients.yml playbook wil show a prompt displaying which clients to add 
+# and revoke before actually doing it and will only continue execution after confirmation input
+# Set this to false to disable this prompt.
+prompt_before_syncing_clients: true
 
 # maintain a list of your valid_clients here, used by the sync_clients.yml playbook
 valid_clients:
   - laptop
   - phone
 
+# Whether the install.yml playbook will load iptables rules.
+# If set to false you have to apply them yourself. See README section "Firewall".
+load_iptables_rules: false
 iptables_path: "/sbin/iptables"
-# Should iptables rules be loaded or not.
-load_iptables_rules: False
+openvpn_path_iptables_rules: "{{ openvpn_path }}/openvpn_iptables_rules.sh"
+
+# path where fetched credentials are stored
+local_creds_folder: "{{ playbook_dir }}/../fetched_creds/{{ openvpn_server_remote_host }}"
 
 openvpn_path: "/etc/openvpn"
 openvpn_path_pki: "{{ openvpn_path }}/pki"
@@ -64,8 +60,14 @@ dhparams_size: "{{ openvpn_key_size }}"
 dhparams_location: "{{ openvpn_path_pki }}/dh.pem"
 openvpn_crl: "{{ openvpn_path_pki }}/crl.pem"
 openvpn_server_common_name_file: "{{ openvpn_path }}/openvpn_server_common_name"
-openvpn_path_iptables_rules: "{{ openvpn_path }}/openvpn_iptables_rules.sh"
-
 openvpn_server_remote_host: "{{ inventory_hostname }}"
 
-local_creds_folder: "{{ playbook_dir }}/../fetched_creds/{{ openvpn_server_remote_host }}"
+openvpn_key_size: "2048"
+openvpn_cipher: "AES-256-CBC"
+openvpn_auth_digest: "SHA256"
+# For all available ciphers use: openvpn --show-tls
+# For all available PFS ciphers (without eliptic curve cryptography) use: openvpn --show-tls | grep -e "-DHE-"
+# Configuration here just uses PFS ciphers leveraging AES256 and at least SHA256
+openvpn_tls_cipher: "TLS-DHE-DSS-WITH-AES-256-GCM-SHA384:TLS-DHE-RSA-WITH-AES-256-GCM-SHA384:TLS-DHE-RSA-WITH-AES-256-CBC-SHA256:TLS-DHE-DSS-WITH-AES-256-CBC-SHA256"
+
+openvpn_easyrsa_version: v3.0.3

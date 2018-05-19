@@ -38,7 +38,7 @@
 - name: OpenVPN | Sync Clients | Abort if user does not want to proceed
   fail:
     msg: "Aborted due to user input!"
-  when: prompt_before_syncing_clients == True and sync_prompt.user_input not in ["Y", "y", "yes", "Yes"]
+  when: prompt_before_syncing_clients == True and sync_prompt.user_input not in ["Y", "y"]
 
 - name: OpenVPN | Sync Clients | Add clients
   include_role:

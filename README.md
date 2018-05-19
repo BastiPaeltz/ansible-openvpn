@@ -1,6 +1,6 @@
 # ansible-openvpn [![Build Status](https://travis-ci.org/BastiPaeltz/ansible-openvpn.svg?branch=master)](https://travis-ci.org/BastiPaeltz/ansible-openvpn)
 
-Ansible role for installing openvpn
+Ansible role for installing openvpn.
 
 This is a fork of [ansible-openvpn-hardened](https://github.com/bau-sec/ansible-openvpn-hardened).
 
@@ -13,7 +13,7 @@ Features kept:
 - setting up a OpenVPN PKI using easyrsa3 with certificate revokation, DH parameters and HMAC
 - generates [multiple OpenVPN client configurations](#Distributing-key-files)
 - support for [certificate signing request](#Adding-clients-using-a-CSR)
-- easy [client management](#Adding-clients) via ansible playbooks, e.g. will [fetch](http://docs.ansible.com/ansible/latest/modules/fetch_module.html) client config files
+- convenient [client management](#Adding-clients) via ansible playbooks, e.g. will [fetch](http://docs.ansible.com/ansible/latest/modules/fetch_module.html) client config files
 - use only TLS ciphers that implement perfect forward secrecy
 - OpenVPN configuration aims to enhance security, e.g. use of `tls-auth`, `verify-x509-name` or `push block-outside-dns`
 - CA password is not stored on the OpenVPN host
@@ -26,7 +26,7 @@ Features this project adds to that:
 
 Things I stripped from ansible-openvpn-hardened, because they are not directly related to OpenVPN or might not be desired by users who run this on existing systems. So this project wil **NOT**:
 - upgrade all packages and install software to periodically update them
-- remove any of the installed package
+- remove any of the installed packages
 - install dnsmasq
 - modify the iptables firewall rules
 - reboot after `install.yml` playbook is finished
@@ -36,8 +36,9 @@ Features still to come:
 - more configuration options for openvpn, e.g.:
   - pushing routes
   - pushing dhcp-options
+- IPv6 support
 
-However I also had to switch back to running openvpn as a privileged user because I ran into too many problems with that, might be changed in the future.
+However I also had to switch back to running openvpn as a privileged user for now because I ran into too many problems with that, might be changed in the future.
 
 ## Supported Targets
 
@@ -59,7 +60,8 @@ Copy the sample Ansible inventory and variables to edit for your setup. (I will 
 Edit the inventory hosts (`hosts.ini`) to target your desired host. You can also change the [configuration variables](#configuration-variables) in (`group_vars/all.yml`), the defaults are however sufficient for this quickstart example.
 It is also possible to [target multiple hosts each using different variables](#targeting-multiple-hosts).
 
-OpenVPN requires some firewall rules to forward packets. By default **NO** firewall rules will be written/altered. However you can set `load_iptables_rules` to `true` and a [generated script](./playbooks/roles/openvpn/templates/etc_iptables_rules.v4.j2), that you can find at `/etc/openvpn/openvpn_iptables_rules.sh` on the host (after installation finished) will load the minimum required rules into ip(v4)tables. If you opt to not do this you can set the firewall rules by hand. OpenVPN will need at least the `MASQUERADE` rule from that script.
+OpenVPN requires some firewall rules to forward packets. By default **NO** firewall rules will be written/altered.  
+However you can set `load_iptables_rules` to `true` and a [generated script](./playbooks/roles/openvpn/templates/etc_iptables_rules.v4.j2), that you can find at `/etc/openvpn/openvpn_iptables_rules.sh` on the host (after installation finished) will load the minimum required rules into ip(v4)tables. If you opt to not do this you can set the firewall rules by hand. OpenVPN will need at least the `MASQUERADE` rule from that script to work.
 
 Run the install playbook
 
@@ -69,20 +71,23 @@ The OpenVPN server is now up and running. Time to add some clients.
 
 ## Client state syncing
 
-When you run the `sync_clients.yml` playboook it will sync the desired state (which clients are in the `valid_clients` list, by default "phone" and "laptop") with the current state (which clients are currently valid on the OpenVPN host).
+When you run the `sync_clients.yml` playboook it will sync the desired state (which clients are in the `valid_clients` list, by default "phone" and "laptop") with the current state (which clients are currently valid on the OpenVPN host).  
 Clients that are not desired but currently valid will be revoked.  
 Clients that are desired but currently not present on the OpenVPN host will be created/added.  
 **NOTE**: Once you revoke a client, it is NOT possible to make it valid again, so I suggest using somewhat unique names as `valid_clients`.  
+
 By default once you run the `sync_clients.yml` playbook it will first tell you which clients it will add and revoke before doing it, you will have to manually confirm before it proceeds. You can disable this prompt by setting `prompt_before_syncing_clients` to `false`.
 
     ansible-playbook playbooks/sync_clients.yml -i inventories/my_project/hosts.ini
 
-After the playbook finished, the credentials will be in the `fetched_creds/` directory after the playbook finished succesfully. Try connecting to the OpenVPN server:
+After the playbook finished, the credentials will be in the `fetched_creds/` directory after the playbook finished succesfully.  
+You'll be prompted for the private key passphrase, this is stored in a file ending in `.txt` in the client directory you just entered in the step above.  
+Try connecting to the OpenVPN server:
 
     cd fetched_creds/[inventory_hostname]/[client name]/
     openvpn [client name]-pki-embedded.ovpn
 
-This way you can maintain state of your clients, even on different hosts if you wanted, see [Targeting multiple hosts](#targeting-multiple-hosts) and [State Management](#How-to-use-this-to-manage-state).
+With the `sync_clients.yml` playbook you can maintain state of your clients, even on different hosts, see [Targeting multiple hosts](#targeting-multiple-hosts) and [State Management](#How-to-manage-state).
 
 ## Adding clients manually
 
@@ -137,12 +142,49 @@ The variable `csr_path` specifies the local path to the CSR. `cn` specifies the 
 This will generate the client's signed certificate and put it in `fetched_creds/[server ip]/[cn]/` as well as a nearly complete `.ovpn` client configuration file. You'll need to add references to or embed your private key and signed certificate. This will vary based on how your private key is stored. If your following the guide in the blog post mentioned above you'd do this using the OpenVPN option `cryptoapicert`.
 
 ## Targeting multiple hosts
+It is possible to not only target multiple hosts but also use different groups and apply certain configuration variables to that group only. An example:
 
-TODO
+Consider this `hosts.ini` inventory:
+```
+[production]
+bastion-prod-us-east-1
+bastion-prod-us-east-2
 
-## How to use this to manage state
+[qa]
+bastion-qa
 
-TODO
+[openvpn:children]
+production
+qa
+```
+
+You can now create a file `production.yml` in `group_vars`:
+```
+openvpn_key_country:  "US"
+openvpn_key_province: "Ohio"
+openvpn_key_city: "Cleveland"
+openvpn_key_org: "FOOBAR CORPORATION"
+openvpn_key_ou: "Operations"
+openvpn_key_email: "foobar@example.com"
+```
+
+This configuration will now be applied to hosts in the `production` group only and will override variables from the `all.yml`.  
+You can even do this on a per-host level, which will override group-level variables.  
+E.g. create a file `host_vars/bastion-prod-us-east-1.yml`:
+```
+openvpn_key_ou: "Operations Unit B"
+```
+
+Further reading: [Ansible variable documentation, especially section: "Precedence"](http://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html).
+
+This also comes in handy when managing clients with the `sync_clients.yml` playbook because you can then configure which clients are valid on a per-host or per-group basis.
+
+## How to manage state
+
+You can use this to manage state by committing and continously updating configuration, especially for client syncing.
+There are different approaches you can take, here are two suggestions:  
+- Manage all configuration files (all `inventories/` files) on a separate location, e.g. inside of [Jenkins](https://wiki.jenkins.io/display/JENKINS/Config+File+Provider+Plugin) and once these change, trigger a run of the playbook(s), especially `sync_clients.yml`. Disadvantage: You can not easily run this from anywhere else since the configuration iles are missing.
+- Encrypt all configuration files (e.g. using `ansible-vault`), commit them to source control and trigger a run of the playbook(s) after a new commit is pushed.
 
 ## Revoke client access manually
 
@@ -154,7 +196,7 @@ To revoke clients access, you can run the `revoke_clients.yml` playbook. It need
 
 ## Configuration variables
 
-TODO
+There is documentation on the most important variables in [all.yml](./inventories/sample/group_vars/all.yml).
 
 ### OpenVPN server configuration
 For the full server configuration, see [`etc_openvpn_server.conf.j2`](playbooks/roles/openvpn/templates/etc_openvpn_server.conf.j2)
@@ -190,7 +232,6 @@ OpenVPN requires some firewall rules to forward packets.
 By default **NO** firewall rules will be written/altered.  
 However you can set `load_iptables_rules` to `true` and a [generated script](./playbooks/roles/openvpn/templates/etc_iptables_rules.v4.j2), that you can find at `/etc/openvpn/openvpn_iptables_rules.sh` on the host (after installation finished) will load the minimum required rules into ip(v4)tables. If you opt to not do this you can set the firewall rules by hand. OpenVPN will need at least the `MASQUERADE` rule from that script.
 
-
 ### Credentials (CA password)
 
 Credentials are generated during the install process and are saved as yml formatted files in the Ansible file hierarchy so they can be used without requiring the playbook caller to take any action. The locations are below.
@@ -203,4 +244,37 @@ Contributions via pull request, feedback, bug reports are all welcome.
 
 ## How to develop using Docker
 
-TODO
+1. Generate ssh keypair
+ssh-keygen -t rsa -f ./test/id_rsa -q -N ""
+
+2. Set environment variables, you can change these to target different distributions, see the `matrix` section of the [Travis build file](./.travis.yml).
+```
+export docker_concurrent_containers=1;
+export distribution=debian; export version=8.7;
+export docker_build_image=yes;
+export run_opts='--detach --privileged -p 11194:1194/udp --volume=/sys/fs/cgroup:/sys/fs/cgroup';
+export init=/bin/systemd;
+export ssh=ssh;
+```
+
+3. Create vars directories and copy variables
+```
+mkdir test/host_vars test/group_vars
+cp inventories/sample/group_vars/all.yml test/group_vars/all.yml
+```
+
+4. Create the container(s)
+```
+./test/docker-setup.sh
+```
+Now we have a Debian container running, that has systemd and ssh installed.
+You could set up a whole bunch of containers this way and test multi-host configurations.
+
+5. Install OpenVPN
+We can now run the `install.yml` playbook.
+```
+ansible-playbook playbooks/install.yml --diff --private-key test/id_rsa -i test/docker-inventory -e "load_iptables_rules=true" -e "openvpn_key_size=1024" -e "@test/ansible-vars/01_install_${distribution}.yml"
+```
+
+You can run all other playbooks as well now.
+Try connecting to the OpenVPN at UDP port 11194 (IPv4) after adding some clients.

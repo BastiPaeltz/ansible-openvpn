@@ -5,10 +5,6 @@ package_name_words: wamerican-huge
 path_dict: /usr/share/dict/american-english-huge
 
 os_family_specific_pre:
-  # Needed for ansible module apt: upgrade
-  - aptitude
-  # Make firewall rules persistent across reboots
-  - iptables-persistent
   # Make sure https repos can be added (needed for OpenVPN repo)
   - apt-transport-https
   - ca-certificates
