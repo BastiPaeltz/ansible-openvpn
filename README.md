@@ -245,7 +245,9 @@ Contributions via pull request, feedback, bug reports are all welcome.
 ## How to develop using Docker
 
 1. Generate ssh keypair
+```
 ssh-keygen -t rsa -f ./test/id_rsa -q -N ""
+```
 
 2. Set environment variables, you can change these to target different distributions, see the `matrix` section of the [Travis build file](./.travis.yml).
 ```

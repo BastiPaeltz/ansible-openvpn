@@ -1,2 +1,11 @@
 easyrsa_dn_mode_cn_only: True
 openvpn_server_common_name_manual: "Company Foo Ltd.test"
+
+openvpn_instances:
+  - {
+      proto: udp,
+      port: 1194,
+      mask: "10.9.0.0 255.255.255.0",
+      cidr: "10.9.0.0/24",
+      server_extra_options: ['push "route 10.10.0.0 255.255.255.0"'],
+  }

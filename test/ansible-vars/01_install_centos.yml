@@ -1,1 +1,10 @@
 load_iptables_rules: True
+
+openvpn_instances:
+  - {
+      proto: tcp,
+      port: 443,
+      mask: "10.8.0.0 255.255.255.0",
+      cidr: "10.8.0.0/24",
+      server_extra_options: ['client-to-client', 'duplicate-cn'],
+  }

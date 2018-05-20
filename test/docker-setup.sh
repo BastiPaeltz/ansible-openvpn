@@ -11,12 +11,9 @@ for ((i=1; i<=${docker_concurrent_containers}; i++))
 do
     # Run the container
     container_id=$(docker run ${run_opts} ${distribution}-${version}:ansible "${init}")
-    echo "container_id is $container_id"
     container_ip=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${container_id})
-    echo "container_ip is $container_ip"
-    #docker exec ${container_id} /bin/systemctl status ${ssh}.service
     docker ps
 
     # Get the IP of the container and add it to the inventory
-    echo "${container_ip} ansible_user=docker ansible_become=yes ansible_become_pass=password" >> test/docker-inventory
+    echo "$(echo ${container_id} | cut -c1-13) ansible_host=${container_ip} ansible_user=docker ansible_become=yes ansible_become_pass=password" >> test/docker-inventory
 done
