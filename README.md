@@ -5,7 +5,7 @@ Ansible role for installing openvpn.
 This is a fork of [ansible-openvpn-hardened](https://github.com/bau-sec/ansible-openvpn-hardened).
 
 ansible-openvpn-hardened has a lot of cool features when it comes to openvpn and a nice approach to managing client keys.
-It is however more geared towards configuring a complete system. It is basically setting up a secured, hardened box that runs openvpn from scratch. So it is not really possible to plug this into one of your existing hosts or only use parts of it.
+It is however more geared towards configuring a complete system. It is basically setting up a secured, hardened box that runs openvpn from scratch. So it is not really possible to only use parts of it or plug this into one of your existing hosts or.
 
 This project is about setting up openvpn on any kind of system and touching only the parts that are necessary by making as few as possible assumptions about your system / not messing with your current configuration while keeping almost all the cool features found in ansible-openvpn-hardened.
 
@@ -22,7 +22,7 @@ Features this project adds to that:
 - [Client state syncing](#Client-state-syncing) (optional)
 - support for running on and managing multiple hosts at once
 - support for names (CA, clients) with whitespace
-- made more things configurable, e.g. setting the DN_mode or the OpenVPN CN
+- made more things configurable, e.g. setting the DN_mode or the OpenVPN CN or adding arbitrary OpenVPN configuration to server and/or clients
 
 Things I stripped from ansible-openvpn-hardened, because they are not directly related to OpenVPN or might not be desired by users who run this on existing systems. So this project wil **NOT**:
 - upgrade all packages and install software to periodically update them
@@ -33,28 +33,25 @@ Things I stripped from ansible-openvpn-hardened, because they are not directly r
 - install auditd, aide or any other software used for hardening or auditing
 
 Features still to come:
-- more configuration options for openvpn, e.g.:
-  - pushing routes
-  - pushing dhcp-options
+- more configuration options for openvpn
 - IPv6 support
 
 However I also had to switch back to running openvpn as a privileged user for now because I ran into too many problems with that, might be changed in the future.
 
 ## Supported Targets
 
-The following Linux distros are supported:
+The following Linux distros are tested:
 
-- CentOS 7.2 x64
-- Ubuntu 16.04 x64
-- Debian 8.7 x64
+- CentOS 7.2
+- Ubuntu 16.04
+- Debian 8.7
 
-Other distros and versions may work but no promises. If support for another distro is desired, submit an issue ticket. Pull requests are always welcome.
+Other distros and versions may work too. If support for another distro is desired, submit an issue ticket. Pull requests are always welcome.
 
 # Quick start
 
 Copy the sample Ansible inventory and variables to edit for your setup. (I will use `my_project` as an example for the rest of this documentation)
 
-    cd ansible-openvpn/
     cp -r inventories/sample inventories/my_project
 
 Edit the inventory hosts (`hosts.ini`) to target your desired host. You can also change the [configuration variables](#configuration-variables) in (`group_vars/all.yml`), the defaults are however sufficient for this quickstart example.
@@ -158,7 +155,7 @@ production
 qa
 ```
 
-You can now create a file `production.yml` in `group_vars`:
+You can now create a file `production.yml` in `group_vars/`:
 ```
 openvpn_key_country:  "US"
 openvpn_key_province: "Ohio"
@@ -183,7 +180,7 @@ This also comes in handy when managing clients with the `sync_clients.yml` playb
 
 You can use this to manage state by committing and continously updating configuration, especially for client syncing.
 There are different approaches you can take, here are two suggestions:  
-- Manage all configuration files (all `inventories/` files) on a separate location, e.g. inside of [Jenkins](https://wiki.jenkins.io/display/JENKINS/Config+File+Provider+Plugin) and once these change, trigger a run of the playbook(s), especially `sync_clients.yml`. Disadvantage: You can not easily run this from anywhere else since the configuration iles are missing.
+- Manage all configuration files (all `inventories/` files) on a separate location, e.g. inside of [Jenkins](https://wiki.jenkins.io/display/JENKINS/Config+File+Provider+Plugin) and once these change, trigger a run of the playbook(s), especially `sync_clients.yml`. Disadvantage: You can not easily run this from anywhere else since the configuration files are missing.
 - Encrypt all configuration files (e.g. using `ansible-vault`), commit them to source control and trigger a run of the playbook(s) after a new commit is pushed.
 
 ## Revoke client access manually
@@ -273,6 +270,7 @@ Now we have a Debian container running, that has systemd and ssh installed.
 You could set up a whole bunch of containers this way and test multi-host configurations.
 
 5. Install OpenVPN
+  
 We can now run the `install.yml` playbook.
 ```
 ansible-playbook playbooks/install.yml --diff --private-key test/id_rsa -i test/docker-inventory -e "load_iptables_rules=true" -e "openvpn_key_size=1024" -e "@test/ansible-vars/01_install_${distribution}.yml"
