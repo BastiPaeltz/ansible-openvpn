@@ -1,6 +1,6 @@
 # ansible-openvpn [![Build Status](https://travis-ci.org/BastiPaeltz/ansible-openvpn.svg?branch=master)](https://travis-ci.org/BastiPaeltz/ansible-openvpn)
 
-Ansible role for installing openvpn.
+Ansible role and playbooks for installing openvpn and managing clients.
 
 This is a fork of [ansible-openvpn-hardened](https://github.com/bau-sec/ansible-openvpn-hardened).
 
