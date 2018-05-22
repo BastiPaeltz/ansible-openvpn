@@ -2,6 +2,11 @@ client
 
 {% for instance in openvpn_instances %}
 remote {{ openvpn_server_remote_host }} {{ instance.port }} {{ instance.proto }}
+
+{% for item in instance.client_extra_options %}
+{{ item }}
+{% endfor %}
+
 {% endfor %}
 
 dev tun

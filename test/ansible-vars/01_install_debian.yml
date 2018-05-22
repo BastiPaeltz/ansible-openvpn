@@ -8,4 +8,5 @@ openvpn_instances:
       mask: "10.9.0.0 255.255.255.0",
       cidr: "10.9.0.0/24",
       server_extra_options: ['push "route 10.10.0.0 255.255.255.0"'],
+      client_extra_options: [],
   }

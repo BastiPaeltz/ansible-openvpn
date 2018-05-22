@@ -14,7 +14,8 @@ easyrsa_dn_mode_cn_only: false
 # `proto` and `port` where OpenVPN will listen at.
 # `mask` and `cidr` refer to the subnets used for tunneling.
 # `server_extra_options` defines config options added to the OpenVPN server config,
-#  e.g. `push` or `client-to-client`.
+#  e.g. `push ...` or `client-to-client`.
+# `client_extra_options` defines config options added to the OpenVPN client config.
 openvpn_instances:
   - {
       proto: udp,
@@ -22,6 +23,7 @@ openvpn_instances:
       mask: "10.9.0.0 255.255.255.0",
       cidr: "10.9.0.0/24",
       server_extra_options: ['push "redirect-gateway def1"'],
+      client_extra_options: [],
   }
   # Uncomment below to listen on TCP 443. This will look like normal SSL/TLS traffic
   # and will be more likely to get through restrictive firewalls.
@@ -31,6 +33,7 @@ openvpn_instances:
   #     mask: "10.8.0.0 255.255.255.0",
   #     cidr: "10.8.0.0/24",
   #     server_extra_options: ['push "redirect-gateway def1"'],
+  #     client_extra_options: [],
   # }
 
 # Whether sync_clients.yml playbook wil show a prompt displaying which clients to add 

@@ -2,9 +2,18 @@ load_iptables_rules: True
 
 openvpn_instances:
   - {
+      proto: udp,
+      port: 1194,
+      mask: "10.9.0.0 255.255.255.0",
+      cidr: "10.9.0.0/24",
+      server_extra_options: ['push "route 10.10.0.0 255.255.255.0"'],
+      client_extra_options: [],
+  }
+  - {
       proto: tcp,
       port: 443,
       mask: "10.8.0.0 255.255.255.0",
       cidr: "10.8.0.0/24",
-      server_extra_options: ['client-to-client', 'duplicate-cn'],
+      server_extra_options: ['push "redirect-gateway def1"'],
+      client_extra_options: [],
   }
