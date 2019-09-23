@@ -31,13 +31,6 @@
 - name: OpenVPN | package | Reread ansible_lsb facts
   setup: filter=ansible_lsb*
 
-- name: OpenVPN | package | Add the official OpenVPN repository
-  apt_repository:
-    repo: 'deb https://build.openvpn.net/debian/openvpn/stable {{ ansible_lsb.codename }} main'
-    state: present
-    update_cache: yes
-  when: ansible_os_family == "Debian"
-
 - name: OpenVPN | package | Add debian backports
   apt_repository:
     repo: 'deb http://ftp.debian.org/debian {{ ansible_lsb.codename }}-backports main'
