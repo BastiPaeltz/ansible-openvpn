@@ -2,6 +2,7 @@ dev tun-{{ item.proto }}-{{ item.port }}
 server {{ item.mask }}
 proto {{ item.proto }}
 port {{ item.port }}
+management localhost {{ item.management_port }}
 
 ca {{ openvpn_ca_cert }}
 cert "{{ path_server_cert }}"
