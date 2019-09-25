@@ -24,7 +24,7 @@ openvpn_instances:
       cidr: "10.9.0.0/24",
       server_extra_options: ['push "redirect-gateway def1"'],
       client_extra_options: [],
-      item.management_port: 9094
+      management_port: 9094
   }
   # Uncomment below to listen on TCP 443. This will look like normal SSL/TLS traffic
   # and will be more likely to get through restrictive firewalls.
