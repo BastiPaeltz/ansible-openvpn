@@ -17,7 +17,7 @@
 - name: OpenVPN | Sync Clients | Set facts
   set_fact:
     currently_valid_clients: "{{ currently_valid_clients_out.stdout.splitlines() }}"
-    desired_valid_clients: "{{ valid_clients }} + [ 'server@' + openvpn_server_common_name ]"
+    desired_valid_clients: "{{ valid_clients + [ 'server@' + openvpn_server_common_name ] }}" # incorrect syntax used before
     clients_to_revoke: []
     clients_to_add: []
 
