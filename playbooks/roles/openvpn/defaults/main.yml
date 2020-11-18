@@ -1,8 +1,8 @@
 ---
 required_packages:
   - sudo
-  - python-pip
-  - python-virtualenv
+  - python3-pip
+  - python3-virtualenv
   - git
   # Used for the sync_clients matching
   - gawk
