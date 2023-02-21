@@ -1,0 +1,96 @@
+---
+- name: OpenVPN | Send Credentials | send message in slack for new user
+  include_role:
+    name: "./../../../send-message-slack"
+  vars:
+    email: "{{ client_to_add }}"
+    text: >
+      we are creating a new vpn account for you
+      please check your mail {{ client_to_add }},
+      later a message about 2fa authentication will appear here
+  when: enable_2fa
+
+- name: OpenVPN | Send Credentials | Create dir for otp authentication
+  file:
+    path: "/etc/openvpn/otp/"
+    state: directory
+
+- name: OpenVPN | Send Credentials | Get ovpn files
+  command: cat "{{ openvpn_path_pki }}/ovpn/{{ client_to_add }}-pki-embedded.ovpn"
+  no_log: true
+  become: False
+  register: client_config
+
+- name: OpenVPN | Send Credentials | Get user/password file
+  delegate_to: localhost
+  command: cat "{{ local_creds_folder }}/{{ client_to_add }}/{{ openvpn_server_common_name }}_passwords.txt"
+  no_log: true
+  become: False
+  register: client_login_password
+  when: enable_auth_user_password
+
+- name: OpenVPN | Send Credentials | Get pass phrase
+  delegate_to: localhost
+  command: cat "{{ local_creds_folder }}/{{ client_to_add }}/{{ openvpn_server_common_name }}_pk_pass.txt"
+  no_log: true
+  become: False
+  register: client_config_passphrase
+
+- name: OpenVPN | Send Credentials | Generate otp key
+  command: "google-authenticator --time-based --disallow-reuse --force --rate-limit=3 --rate-time=30 --window-size=3 -l {{ client_to_add }} -s /etc/openvpn/otp/{{ client_to_add }}.google_authenticator --i='{{ openvpn_issuer_name }}'"
+  become: False
+  register: otp_config
+  when: enable_2fa
+
+- name: OpenVPN | Send Credentials | Write otp in file
+  delegate_to: localhost
+  copy:
+    content: "{{ otp_config.stdout }}"
+    dest: "{{ local_creds_folder }}/{{ client_to_add }}/{{ openvpn_server_common_name }}_otp.txt"
+  become: False
+  when: enable_2fa
+
+- name: OpenVPN | Send Credentials | Absent pass phrase
+  delegate_to: localhost
+  file:
+    path: "{{ local_creds_folder }}/{{ client_to_add }}/"
+    state: absent
+
+- name: OpenVPN | Send Credentials | Debug
+  debug:
+    msg:
+      - "Config: {{ client_config.stdout }}"
+      - "Otp: {{ otp_config.stdout if enable_2fa }}"
+      - "Pass Cert: {{ client_config_passphrase.stdout }}"
+      - "Cogiguration: {{ client_login_password.stdout }}"
+  when: debug is defined
+
+- name: OpenVPN | Send Credentials | send message clients in slack
+  include_role:
+    name: "./../../../send-message-slack"
+  vars:
+    email: "{{ client_to_add }}"
+    text: >
+      {{ otp_config.stdout if enable_2fa }}
+  when: enable_2fa
+
+- name: OpenVPN | Send Credentials | Send VPN credentials to {{ client_to_add }}
+  mail:
+    host: "{{ ses_server_name }}"
+    port: 465
+    username: "{{ email_gateway_mail_username }}"
+    password: "{{ email_gateway_mail_password }}"
+    from: "{{ email_gateway_sender }}"
+    to: "{{ client_to_add }}"
+    subject: "{{ vpn_mail_subject }}"
+    body: "{{ vpn_mail_body }} \nScope: {{ ansible_limit }}\n
+        Password cert: {{ client_config_passphrase.stdout }}\n
+        Cogiguration:
+        {{ client_login_password.stdout }}\n\
+        If you have any problems or questions please write to the slack channel #it.\n\n
+        Best regards,\n
+        Your DevOps team"
+    attach:
+      - "{{ openvpn_path_pki }}/ovpn/{{ client_to_add }}-pki-embedded.ovpn"
+#  when: debug is not defined
+

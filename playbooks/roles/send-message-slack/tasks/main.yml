@@ -1,0 +1,54 @@
+---
+- assert:
+    that:
+      - email != "" #slack email user
+      - text != "" #text message
+      - message_slack_token != ""
+
+- name: Get username id from email user
+  ansible.builtin.uri:
+    url: 'https://slack.com/api/users.lookupByEmail?email={{ email }}'
+    method: GET
+    return_content: yes
+    headers:
+      Authorization: "Bearer {{ message_slack_token }}"
+  register: user_json
+
+- name: Show error from slack
+  debug: var=user_json.json.error
+  failed_when: true
+  when: user_json.json.ok == false
+
+- name: Create or Open conversation in find user
+  ansible.builtin.uri:
+    url: 'https://slack.com/api/conversations.open?users={{ user_json.json.user.id }}'
+    method: GET
+    return_content: yes
+    headers:
+      Authorization: "Bearer {{ message_slack_token }}"
+  register: conversation_json
+
+- name: Show error from slack
+  debug: var=conversation_json.json.error
+  failed_when: true
+  when: conversation_json.json.ok == false
+
+- name: Sends a message to a channel find user
+  ansible.builtin.uri:
+    url: 'https://slack.com/api/chat.postMessage'
+    method: POST
+    return_content: yes
+    body:
+      channel : "{{ conversation_json.json.channel.id }}"
+      text : "{{ text }}"
+    body_format: json
+    headers:
+      Content-Type: application/json; charset=utf-8
+      Authorization: "Bearer {{ message_slack_token }}"
+  register: result
+
+- name: Show error from slack
+  debug: var=result.json.error
+  failed_when: true
+  when: result.json.ok == false
+

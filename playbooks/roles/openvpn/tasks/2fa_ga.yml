@@ -1,0 +1,12 @@
+- name: OpenVPN | 2fa GA | Intall package for google authenticator
+  ansible.builtin.package:
+    name:
+      - libpam-google-authenticator
+      - pamtester
+    state: latest
+
+- name: OpenVPN | 2fa GA | Copy OpenVPN pam config in Machine
+  template:
+    src: "openvpn_otp"
+    dest: "/etc/pam.d/openvpn"
+

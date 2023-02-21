@@ -1,52 +1,51 @@
-# ansible-openvpn [![Build Status](https://travis-ci.org/BastiPaeltz/ansible-openvpn.svg?branch=master)](https://travis-ci.org/BastiPaeltz/ansible-openvpn)
+______________________________
+Full refactoring (21.02.2023)
+- add send credentials in email
+- delete storage sensitive data in localhost
+- add storage users in db module (user/password)
+- Added support OTP key (google authenticator)
+- Update openvpn 2.5 (support tls-crypt-v2)
+- Add send otp key in slack
+- Add tls-crypt-v2 fot server/users
+- Performance settings clients ovpn files
+- update ciphers openvpn
+- add stop current openvpn service for increase stability playbook
+- disable nat and enable forwarding packet in subnet
+- remove every standard default server
+- Others small fix
+______________________________
+
+
+
+# ansible-openvpn-mikrotik [![Build Status](https://travis-ci.org/dteslya/ansible-ovpn-mikrotik.svg?branch=master)](https://travis-ci.org/dteslya/ansible-ovpn-mikrotik)
 
 Ansible role and playbooks for installing openvpn and managing clients.
 
-This is a fork of [ansible-openvpn-hardened](https://github.com/bau-sec/ansible-openvpn-hardened).
+This is a fork of [ansible-openvpn](https://github.com/BastiPaeltz/ansible-openvpn) which in turn is a fork of [ansible-openvpn-hardened](https://github.com/bau-sec/ansible-openvpn-hardened).
 
-ansible-openvpn-hardened has a lot of cool features when it comes to openvpn and a nice approach to managing client keys.
-It is however more geared towards configuring a complete system. It is basically setting up a secured, hardened box that runs openvpn from scratch. So it is not really possible to only use parts of it or plug this into one of your existing hosts or.
+Notable changes:
+- Support for Mikrotik routers as clients
+- Ability to define `client-config-dir` for clients in `group_vars/all.yml`
+- Adding clients using a CSR functionality is stripped
+- Distro repository is used to install OpenVPN package instead of official OpenVPN repository
+- EasyRSA v3.0.6 is used
+- Firewall rules are saved using `netfilter-persistent`
 
-This project is about setting up openvpn on any kind of system and touching only the parts that are necessary by making as few as possible assumptions about your system / not messing with your current configuration while keeping almost all the cool features found in ansible-openvpn-hardened.
+Hence Mikrotik RouterOS only supports TCP connection type I define a separate OpenVPN instance with `proto: tcp` and `port: 443`. This instance can also be used by other clients in case of restrictive firewalls on the network.
 
-Features kept:
-- setting up a OpenVPN PKI using easyrsa3 with certificate revokation, DH parameters and HMAC
-- generates [multiple OpenVPN client configurations](#Distributing-key-files)
-- support for [certificate signing request](#Adding-clients-using-a-CSR)
-- convenient [client management](#Adding-clients) via ansible playbooks, e.g. will [fetch](http://docs.ansible.com/ansible/latest/modules/fetch_module.html) client config files
-- use only TLS ciphers that implement perfect forward secrecy
-- OpenVPN configuration aims to enhance security, e.g. use of `tls-auth`, `verify-x509-name` or `push block-outside-dns`
-- CA password is not stored on the OpenVPN host
-
-Features this project adds to that:
-- [Client state syncing](#Client-state-syncing) (optional)
-- support for running on and managing multiple hosts at once
-- support for names (CA, clients) with whitespace
-- made more things configurable, e.g. setting the DN_mode or the OpenVPN CN or adding arbitrary OpenVPN configuration to server and/or clients
-
-Things I stripped from ansible-openvpn-hardened, because they are not directly related to OpenVPN or might not be desired by users who run this on existing systems. So this project wil **NOT**:
-- upgrade all packages and install software to periodically update them
-- remove any of the installed packages
-- install dnsmasq
-- modify the iptables firewall rules
-- reboot after `install.yml` playbook is finished
-- install auditd, aide or any other software used for hardening or auditing
-
-Features still to come:
-- more configuration options for openvpn
-- IPv6 support
-
-However I also had to switch back to running openvpn as a privileged user for now because I ran into too many problems with that, might be changed in the future.
+To further guarantee RouterOS support the following settings are now default:
+- `comp-lzo` is disabled
+- `cipher AES-128-CBC`
+- `auth SHA1`
 
 ## Supported Targets
 
 The following Linux distros are tested:
 
-- CentOS 7.2
+- Ubuntu 18.04
 - Ubuntu 16.04
-- Debian 8.7
 
-Other distros and versions may work too. If support for another distro is desired, submit an issue ticket. Pull requests are always welcome.
+Other distros and versions may work too.
 
 # Quick start
 
@@ -234,47 +233,3 @@ However you can set `load_iptables_rules` to `true` and a [generated script](./p
 Credentials are generated during the install process and are saved as yml formatted files in the Ansible file hierarchy so they can be used without requiring the playbook caller to take any action. The locations are below.
 
 - CA Private key passphrase - saved in `inventories/my_project/host_vars/[inventory_hostname].yml`
-
-# Contributing
-
-Contributions via pull request, feedback, bug reports are all welcome.
-
-## How to develop using Docker
-
-1. Generate ssh keypair
-```
-ssh-keygen -t rsa -f ./test/id_rsa -q -N ""
-```
-
-2. Set environment variables, you can change these to target different distributions, see the `matrix` section of the [Travis build file](./.travis.yml).
-```
-export docker_concurrent_containers=1;
-export distribution=debian; export version=8.7;
-export docker_build_image=yes;
-export run_opts='--detach --privileged -p 11194:1194/udp --volume=/sys/fs/cgroup:/sys/fs/cgroup';
-export init=/bin/systemd;
-export ssh=ssh;
-```
-
-3. Create vars directories and copy variables
-```
-mkdir test/host_vars test/group_vars
-cp inventories/sample/group_vars/all.yml test/group_vars/all.yml
-```
-
-4. Create the container(s)
-```
-./test/docker-setup.sh
-```
-Now we have a Debian container running, that has systemd and ssh installed.
-You could set up a whole bunch of containers this way and test multi-host configurations.
-
-5. Install OpenVPN
-  
-We can now run the `install.yml` playbook.
-```
-ansible-playbook playbooks/install.yml --diff --private-key test/id_rsa -i test/docker-inventory -e "load_iptables_rules=true" -e "openvpn_key_size=1024" -e "@test/ansible-vars/01_install_${distribution}.yml"
-```
-
-You can run all other playbooks as well now.
-Try connecting to the OpenVPN at UDP port 11194 (IPv4) after adding some clients.

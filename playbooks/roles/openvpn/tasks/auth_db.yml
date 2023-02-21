@@ -1,0 +1,29 @@
+- name: OpenVPN | AUTH DB | Create db configuration directory
+  file:
+    path: "{{ openvpn_path_db_users }}"
+    state: directory
+    mode: 0755
+
+- name: OpenVPN | AUTH DB |Download manager users for openvpn and unzip in 'openvpn-user'
+  ansible.builtin.unarchive:
+    src: https://github.com/pashcovich/openvpn-user/releases/download/v1.0.4/openvpn-user-linux-amd64.tar.gz
+    dest: "{{ openvpn_path_db_users }}"
+    remote_src: yes
+
+- name: OpenVPN | AUTH DB | Change permission for file 'openvpn-user'
+  file:
+    dest: "{{ openvpn_path_db_users }}/openvpn-user"
+    mode: "a+x"
+
+- name: OpenVPN | AUTH DB | Initialize database
+  shell: ./openvpn-user db-init --db.path={{ openvpn_path_db_users }}/users.db
+  args:
+    chdir: "{{ openvpn_path_db_users }}"
+    creates: "{{ openvpn_path_db_users }}/users.db"
+
+- name: OpenVPN | AUTH DB | Copy script auth.sh for auth/password
+  template:
+    src: templates/auth.sh.j2
+    dest: "{{ openvpn_path_db_users }}/auth.sh"
+    mode: "u=rwx,g=,o="
+    owner: nobody

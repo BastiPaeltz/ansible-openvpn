@@ -1,2 +1,2 @@
 ---
-foobar: "foobar"
+load_iptables_rules: False

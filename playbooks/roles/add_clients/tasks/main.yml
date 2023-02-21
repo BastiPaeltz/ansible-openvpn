@@ -16,6 +16,14 @@
   include: add_gen_key.yml
   when: clients_to_add is defined
 
-- name: OpenVPN | Add Clients | Add via CSR
-  include: add_via_csr.yml
-  when: csr_path is defined
+- name: OpenVPN | Add Clients | Add clients in database and generate passwords
+  include: add_in_db.yml
+  when: clients_to_add is defined and enable_auth_user_password
+
+- name: OpenVPN | Add Clients | Send credentials to client
+  ansible.builtin.include_role:
+    name: send_credentials
+  vars:
+     client_to_add: "{{ item }}"
+  with_items:
+      - "{{ clients_to_add }}"

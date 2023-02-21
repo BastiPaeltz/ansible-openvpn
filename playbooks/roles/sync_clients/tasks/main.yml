@@ -9,15 +9,19 @@
   set_fact:
     openvpn_server_common_name: "{{ openvpn_server_common_name_result.stdout }}"
 
-- name: OpenVPN | Sync Clients | Get clients that are currently valid
+- name: OpenVPN | Sync Clients | Get clients that are currently valid (work)
   shell: awk '/^V\s/' {{ openvpn_path_pki }}/index.txt | awk -F 'CN=' '{print $NF}' | awk -F '/' '{print $1}'
   register: currently_valid_clients_out
   changed_when: false
 
+- name: OpenVPN | Sync Clients | Get list of desired valid clients
+  set_fact:
+    valid_clients_names: "{{ valid_clients | map(attribute='name') | list }}"
+
 - name: OpenVPN | Sync Clients | Set facts
   set_fact:
     currently_valid_clients: "{{ currently_valid_clients_out.stdout.splitlines() }}"
-    desired_valid_clients: "{{ valid_clients }} + [ 'server@' + openvpn_server_common_name ]"
+    desired_valid_clients: "{{ valid_clients_names }}"
     clients_to_revoke: []
     clients_to_add: []
 
@@ -28,6 +32,10 @@
 - name: OpenVPN | Sync Clients | Sync clients that will be added
   set_fact:
     clients_to_add: "{{ desired_valid_clients | difference(currently_valid_clients) }}"
+
+- name: OpenVPN | Sync Clients | Cancel if all data is empty
+  meta: end_play
+  when: (clients_to_add | length==0) and (clients_to_revoke | length==0)
 
 - name: OpenVPN | Sync Clients | Ask user if we should proceed
   pause:

@@ -6,8 +6,8 @@ path_dict: /usr/share/dict/american-english-huge
 
 os_family_specific_pre:
   # Make sure https repos can be added (needed for OpenVPN repo)
-  - apt-transport-https
-  - ca-certificates
+  #- apt-transport-https
+  #- ca-certificates
   # Required for the apt_repository module
-  - python-software-properties
-
+  #- python-software-properties
+  #- software-properties-common

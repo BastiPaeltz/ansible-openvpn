@@ -1,21 +1,33 @@
 ---
+- name: OpenVPN | systemd | stop all openvpn instances
+  shell: systemctl stop openvpn@*.service
+
 - name: OpenVPN | sysctl | Enable IPv4 traffic forwarding
   sysctl:
     name: net.ipv4.ip_forward
     value: 1
+
+- name: OpenVPN | Configuration | Create client configuration directory
+  file:
+    path: "{{ openvpn_path_ccd }}"
+    state: directory
+    mode: 0755
 
 - name: OpenVPN | Configuration | Copy OpenVPN server configuration files into place
   template:
     src: etc_openvpn_server.conf.j2
     dest: "{{ openvpn_path }}/{{ item.proto }}-{{ item.port }}.conf"
   with_items: "{{ openvpn_instances }}"
-  notify:
-    - start openvpn
 
 - name: OpenVPN | systemd | Enable services
   service:
     name: "openvpn@{{ item.proto }}-{{ item.port }}.service"
     enabled: true
   with_items: "{{ openvpn_instances }}"
-  notify:
-    - start openvpn
+
+- name: "start openvpn"
+  service:
+    name: "openvpn@{{ item.proto }}-{{ item.port }}.service"
+    state: started
+  with_items: "{{ openvpn_instances }}"
+  register: result

@@ -3,23 +3,39 @@
 # This script is used to configure iptables to work with OpenVPN on this host
 
 # Allow connections to the VPN
+{#
 {% for instance in openvpn_instances %}
 {{ iptables_path }} -A INPUT -p {{ instance.proto }} --dport {{ instance.port }} -j ACCEPT
 {% endfor %}
+#}
 
+# Reset nat
+iptables -t nat -F
+ip route add 10.0.0.0/24 via {{ ansible_default_ipv4.interface }}
+
+{#
 # This rule is necessary for OpenVPN to work and forward IP packets
 {% for instance in openvpn_instances %}
 {{ iptables_path }} -t nat -A POSTROUTING -s {{ instance.cidr }} -o {{ ansible_default_ipv4.interface }} -j MASQUERADE
 {% endfor %}
+#}
 
+{#
 {% for instance in openvpn_instances %}
 {{ iptables_path }} -A FORWARD -s {{ instance.cidr }} -j ACCEPT
 {% endfor %}
+#}
 
+{#
 # Allow SSH connections on the VPN
 {% for instance in openvpn_instances %}
 {{ iptables_path }} -A INPUT -p tcp -d {{ instance.cidr }} --dport {{ ansible_port | default('22') }} -j ACCEPT
 {% endfor %}
+#}
 
 # Consider removing SSH access from the main IPv4 address after you established a VPN connection, e.g. with:
-#{{ iptables_path }} -A INPUT -p tcp -i {{ ansible_default_ipv4.interface }} --dport {{ ansible_port | default('22') }} -j DROP
+{#
+{{ iptables_path }} -A INPUT -p tcp -i {{ ansible_default_ipv4.interface }} --dport {{ ansible_port | default('22') }} -j DROP
+#}
+# Save rules
+/usr/sbin/netfilter-persistent save

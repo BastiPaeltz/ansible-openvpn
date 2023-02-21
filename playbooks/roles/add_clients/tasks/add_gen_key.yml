@@ -1,6 +1,8 @@
 ---
 - name: OpenVPN | Add Clients | Check for existing private key passwords
-  local_action: stat path="{{ local_creds_folder }}/{{ item }}/{{ openvpn_server_common_name }}_pk_pass.txt"
+  delegate_to: localhost
+  stat:
+    path: "{{ local_creds_folder }}/{{ item }}/{{ openvpn_server_common_name }}_pk_pass.txt"
   become: False
   register: client_pk_passwords_local
   with_items:
@@ -11,25 +13,32 @@
   no_log: true
   register: client_pk_passwords
   with_items: "{{ clients_to_add }}"
-  when: "client_pk_passwords_local.results[0].stat.exists == False"
+  when: not client_pk_passwords_local.results[0].stat.exists
 
 - name: OpenVPN | Add Clients | Make local destination
-  local_action: file path="{{ local_creds_folder }}/{{ item }}/" state=directory
+  delegate_to: localhost
+  file:
+    path: "{{ local_creds_folder }}/{{ item }}/"
+    state: directory
   become: False
   with_items:
     - "{{ clients_to_add }}"
 
 - name: OpenVPN | Add Clients | Write private key pass phrases
-  local_action: copy content={{ item[1].stdout }} dest="{{ local_creds_folder }}/{{ item[0] }}/{{ openvpn_server_common_name }}_pk_pass.txt"
+  delegate_to: localhost
+  copy:
+    content: "{{ item[1].stdout }}"
+    dest: "{{ local_creds_folder }}/{{ item[0] }}/{{ openvpn_server_common_name }}_pk_pass.txt"
   no_log: true
   become: False
   with_together:
     - "{{ clients_to_add }}"
     - "{{ client_pk_passwords.results }}"
-  when: "client_pk_passwords_local.results[0].stat.exists == False"
+  when: not client_pk_passwords_local.results[0].stat.exists
 
 - name: OpenVPN | Add Clients | Read private key pass phrases
-  local_action: command cat "{{ local_creds_folder }}/{{ item }}/{{ openvpn_server_common_name }}_pk_pass.txt"
+  delegate_to: localhost
+  command: cat "{{ local_creds_folder }}/{{ item }}/{{ openvpn_server_common_name }}_pk_pass.txt"
   no_log: true
   become: False
   register: client_pk_passwords
@@ -82,6 +91,25 @@
   register: openvpn_client_certs
   changed_when: false
 
+- name: OpenVPN | Add Clients | Generate TLS-CRYPT V2
+  shell: >
+    openvpn --tls-crypt-v2 {{ openvpn_tls_crypt }}
+    --genkey tls-crypt-v2-client {{ openvpn_path_keys }}/tls-crypt-{{ item[0] }}.pem
+  args:
+    creates: "{{ openvpn_path_keys }}/tls-crypt-{{ item[0] }}.pem"
+  no_log: true
+  with_together:
+    - "{{ clients_to_add }}"
+  tags:
+    - skip_ansible_lint
+
+- name: OpenVPN | Add Clients | Register tls-crypt-v2 contents
+  command: cat "{{ openvpn_path_keys }}/tls-crypt-{{ item }}.pem"
+  with_items: "{{ clients_to_add }}"
+  no_log: true
+  register: openvpn_client_tls_crypt
+  changed_when: false
+
 - name: OpenVPN | Add Clients | Build client configs (.ovpn files; pki embedded)
   template:
     src: client_pki_embedded.ovpn.j2
@@ -92,6 +120,7 @@
     - "{{ clients_to_add }}"
     - "{{ openvpn_client_certs.results }}"
     - "{{ openvpn_client_keys.results }}"
+    - "{{ openvpn_client_tls_crypt.results }}"
 
 - name: OpenVPN | Add Clients | Build client configs (.ovpn files; pki external files)
   template:
@@ -101,6 +130,17 @@
   no_log: true
   with_items:
     - "{{ clients_to_add }}"
+
+- name: OpenVPN | Add Clients | Get list of clients with ccd defined
+  set_fact:
+    valid_clients_with_ccd: "{{ valid_clients | selectattr('ccd', 'defined') | selectattr('name', 'defined') | list }}"
+
+- name: OpenVPN | Add Clients | Build ccd configs
+  template:
+    src: client_ccd.j2
+    dest: "{{ openvpn_path_ccd }}/{{ item.name }}"
+    mode: 0644
+  with_items: "{{ valid_clients_with_ccd }}"
 
 - name: OpenVPN | Add Clients | Build client configs (.ovpn files; external pkcs12)
   template:
@@ -130,6 +170,7 @@
   tags:
     - skip_ansible_lint
 
+#store to local
 - name: OpenVPN | Add Clients | Get .ovpn files (*-pki-embedded.ovpn)
   fetch:
     src: "{{ openvpn_path_pki }}/ovpn/{{ item }}-pki-embedded.ovpn"

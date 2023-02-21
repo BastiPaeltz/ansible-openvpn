@@ -8,7 +8,8 @@
     dest: "{{ openvpn_path }}/easyrsa"
 
 - name: OpenVPN | PKI | Make local destination folder
-  local_action: file path={{ local_creds_folder }}/ state=directory
+  delegate_to: localhost
+  file: path={{ local_creds_folder }}/ state=directory
   become: False
 
 - name: OpenVPN | PKI | Generate a random server common name
@@ -18,7 +19,7 @@
   when: openvpn_server_common_name_manual is not defined
 
 - name: OpenVPN | PKI | Set server common name
-  shell: echo "{{ openvpn_server_common_name_manual }}" > {{ openvpn_server_common_name_file }}
+  shell: echo "{{ openvpn_server_common_name_manual }}" > {{ openvpn_server_common_name_file }}
   args:
     creates: "{{ openvpn_server_common_name_file }}"
   when: openvpn_server_common_name_manual is defined
@@ -28,20 +29,20 @@
   register: openvpn_server_common_name_result
   changed_when: false
 
-- name: OpenVPN | PKI | Generate CA password
-  shell: echo "$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c15)"
-  no_log: true
-  register: ca_password_result
-  when: ca_password is not defined
+#- name: OpenVPN | PKI | Generate CA password
+#  shell: echo "$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c15)"
+#  no_log: true
+#  register: ca_password_result
+#  when: ca_password is not defined
 
-- name: OpenVPN | PKI | Store CA password
-  local_action:
-    module: lineinfile
-    line: "ca_password: {{ ca_password_result.stdout }}"
-    path: "{{ inventory_dir }}/host_vars/{{inventory_hostname}}.yml"
-    create: true
-  become: False
-  when: ca_password is not defined
+#- name: OpenVPN | PKI | Store CA password
+#  delegate_to: localhost
+#  lineinfile:
+#    line: "ca_password: {{ ca_password_result.stdout }}"
+#    path: "{{ inventory_dir }}/host_vars/{{ inventory_hostname }}.yml"
+#    create: true
+#  become: False
+#  when: ca_password is not defined
 
 - name: OpenVPN | PKI | Set CA password variable
   set_fact:
@@ -84,8 +85,8 @@
   expect:
     command: ./easyrsa build-ca --req-cn "ca@{{ openvpn_server_common_name }}"
     responses:
-      'Enter PEM pass phrase:$': "{{ ca_password }}"
-      'Verifying - Enter PEM pass phrase:$': "{{ ca_password }}"
+      'Enter New CA Key Passphrase: $': "{{ ca_password }}"
+      'Re-Enter New CA Key Passphrase: $': "{{ ca_password }}"
     chdir: "{{ openvpn_path_easyrsa }}"
     creates: "{{ openvpn_path_easyrsa }}/pki/private/ca.key"
 
@@ -101,7 +102,7 @@
   expect:
     command: ./easyrsa build-server-full "server@{{ openvpn_server_common_name }}" nopass --req-cn "server@{{ openvpn_server_common_name }}"
     responses:
-      'Enter pass phrase for .*?:$': "{{ ca_password }}"
+      'Enter pass phrase for .*?:$' : "{{ ca_password }}"
     chdir: "{{ openvpn_path_easyrsa }}"
     creates: "{{ path_server_key }}"
 
@@ -113,6 +114,14 @@
   tags:
     - skip_ansible_lint
 
+- name: OpenVPN | TLS | Build tls-crypt-v2
+  shell: openvpn --genkey tls-crypt-v2-server tls-crypt.pem
+  args:
+    chdir: "{{ openvpn_path_easyrsa }}/pki"
+    creates: "{{ openvpn_tls_crypt }}"
+  tags:
+    - skip_ansible_lint
+
 - name: OpenVPN | PKI | Build dh.pem
   shell: ./easyrsa gen-dh
   args:
@@ -121,8 +130,8 @@
   tags:
     - skip_ansible_lint
 
-- name: OpenVPN | Add Clients | Get CA cert
-  fetch:
-    src: "{{ openvpn_ca_cert }}"
-    dest: "{{ local_creds_folder }}/ca@{{openvpn_server_common_name}}.crt"
-    flat: yes
+#- name: OpenVPN | Add Clients | Get CA cert
+#  fetch:
+#    src: "{{ openvpn_ca_cert }}"
+#    dest: "{{ local_creds_folder }}/ca@{{ openvpn_server_common_name }}.crt"
+#    flat: yes

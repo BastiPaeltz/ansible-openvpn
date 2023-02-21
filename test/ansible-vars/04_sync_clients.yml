@@ -1,6 +1,6 @@
 valid_clients:
-- "testuser1@{{openvpn_server_common_name}}"
-- testuser1
-- testuser5
+- name: "testuser1@{{openvpn_server_common_name}}"
+- name: testuser1
+- name: testuser5
 
 prompt_before_syncing_clients: False

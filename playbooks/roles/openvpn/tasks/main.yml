@@ -11,5 +11,11 @@
 
 - include: packages.yml
 - include: pki.yml
+
+- include: auth_db.yml
+  when: enable_auth_user_password
+
 - include: openvpn.yml
+- include: 2fa_ga.yml
+  when: enable_2fa
 - include: firewall.yml

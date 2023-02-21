@@ -12,13 +12,20 @@
   set_fact:
     openvpn_server_common_name: "{{ openvpn_server_common_name_result.stdout }}"
 
+- name: OpenVPN | Revoke Client | Delete clients in local database
+  shell: ./openvpn-user delete --user={{ item }} --force --db.path={{ openvpn_path_db_users }}/users.db
+  args:
+    chdir: "{{ openvpn_path_db_users }}"
+  with_items: "{{ clients_to_revoke }}"
+  when: clients_to_add is defined and enable_auth_user_password
+
 - name: OpenVPN | Revoke Client | Revoke access
   expect:
-    command: ./easyrsa revoke {{ item }}
+    command: ./easyrsa revoke "{{ item }}"
     responses:
       'Enter pass phrase for .*?:$': "{{ ca_password }}"
     chdir: "{{ openvpn_path_easyrsa }}"
-  no_log: true
+  no_log: false
   with_items: "{{ clients_to_revoke }}"
 
 - name: OpenVPN | Revoke Client | Rebuild CRL

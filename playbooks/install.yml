@@ -5,15 +5,26 @@
 # You need a python 2 interpreter first, so skip gathering facts, then use
 # 'setup:' to get them after the python 2 interpreter has been installed.
 # See 'pre_tasks' below
-  gather_facts: no
+  gather_facts: False
   pre_tasks:
     # If python doesn't exist on path (type returns non-zero), install python
-    - name: OpenVPN | install | Install python2 if necessary
-      raw: 'type python >/dev/null 2>&1 || apt-get -y install python-minimal'
-      changed_when: false
+#    - name: OpenVPN | install | Install python2 if necessary
+#      raw: 'type python >/dev/null 2>&1 || (apt -y update && apt install -y python-minimal)'
+#      changed_when: false
 
-    - name: OpenVPN | install | Gather facts after python2 is available
+#    - name: Download gpg key
+#      apt_key:
+#        url: "https://swupdate.openvpn.net/repos/repo-public.gpg"
+#        state: present
+
+#    - name: Add gpg key for download new version openvpn 2.5
+#      ansible.builtin.apt_repository:
+#        repo: "deb http://build.openvpn.net/debian/openvpn/release/2.5 focal main"
+#        state: present
+
+    - name: OpenVPN | install | Install recomend library
       setup:
 
   roles:
     - openvpn
+

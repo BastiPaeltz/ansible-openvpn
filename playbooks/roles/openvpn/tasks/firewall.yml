@@ -3,6 +3,13 @@
   setup:
     filter: ansible_default_ipv4*
 
+- name: OpenVPN | Firewall | Flush existing firewall rules
+  iptables:
+    table: nat
+    flush: true
+  when: load_iptables_rules
+  changed_when: false
+
 - name: OpenVPN | Firewall | Write iptables rules file
   template:
     src: etc_iptables_rules.v4.j2

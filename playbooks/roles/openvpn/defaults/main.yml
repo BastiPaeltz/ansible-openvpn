@@ -1,15 +1,19 @@
 ---
 required_packages:
   - sudo
-  - python-pip
-  - python-virtualenv
+#  - python-pip
+#  - python-virtualenv
   - git
   # Used for the sync_clients matching
   - gawk
   # Used to verify GPG signatures for mirrored packages
   - gnupg
   - iptables
+  # Used to keep iptables rules after reboot
+  - iptables-persistent
+  - netfilter-persistent
   # Word List dictionary used by several roles to generate random data
   - "{{ package_name_words }}"
   - openssl
   - openvpn
+

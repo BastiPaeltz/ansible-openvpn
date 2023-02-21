@@ -1,0 +1,30 @@
+client
+
+{% for instance in openvpn_instances %}
+remote {{ openvpn_server_remote_host }} {{ instance.port }} {{ instance.proto }}
+
+{% for item in instance.client_extra_options %}
+{{ item }}
+{% endfor %}
+
+{% endfor %}
+
+dev tun
+cipher {{ openvpn_cipher }}
+auth {{ openvpn_auth_digest }}
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+remote-cert-tls server
+verify-x509-name "server@{{ openvpn_server_common_name }}" name
+tls-version-min 1.2
+#comp-lzo
+key-direction 1
+verb 3
+
+{#
+<tls-auth>
+{{ openvpn_hmac_firewall_contents.stdout }}
+</tls-auth>
+#}

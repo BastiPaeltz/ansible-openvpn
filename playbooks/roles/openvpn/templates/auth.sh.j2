@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+PATH=$PATH:/usr/local/bin
+set -e
+auth_usr=$(head -1 $1)
+auth_passwd=$(tail -1 $1)
+
+#detect otp code and delete it (https://github.com/OpenVPN/openvpn/blob/7d0a90335fe79a352456f262ce42ea501796ae87/doc/management-notes.txt#L1292)
+if [[ $auth_passwd == *SCRV1:* ]]; then
+    echo "Info: Pattern otp found"
+    auth_passwd=$(echo $auth_passwd | sed -n 's/SCRV1:\(.*\):.*/\1/p' | base64 -d)
+else
+  echo "Info: Pattern otp not found"
+fi
+
+if [ "$common_name" = "$username" ] && [ ! -z "$auth_usr" ] && [ ! -z "$auth_passwd" ]; then
+  {{ openvpn_path_db_users }}/openvpn-user auth --user="${auth_usr}" --password="${auth_passwd}" --db.path={{ openvpn_path_db_users }}/users.db
+  exit 0
+else
+  echo "Authorization failed"
+  exit 1
+fi

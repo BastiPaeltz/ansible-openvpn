@@ -28,15 +28,21 @@
     state: present
   when: ansible_os_family == "Debian"
 
-- name: OpenVPN | package | Reread ansible_lsb facts
-  setup: filter=ansible_lsb*
-
-- name: OpenVPN | package | Add the official OpenVPN repository
-  apt_repository:
-    repo: 'deb https://build.openvpn.net/debian/openvpn/stable {{ ansible_lsb.codename }} main'
+- name: Add gpg key for download new version openvpn 2.5
+  ansible.builtin.apt_repository:
+    repo: "deb http://build.openvpn.net/debian/openvpn/release/2.5 focal main"
     state: present
-    update_cache: yes
   when: ansible_os_family == "Debian"
+#
+#- name: OpenVPN | package | Reread ansible_lsb facts
+#  setup: filter=ansible_lsb*
+#
+#- name: OpenVPN | package | Add the official OpenVPN repository
+#  apt_repository:
+#    repo: 'deb https://build.openvpn.net/debian/openvpn/stable {{ ansible_lsb.codename }} main'
+#    state: present
+#    update_cache: yes
+#  when: ansible_os_family == "Debian"
 
 - name: OpenVPN | package | Add debian backports
   apt_repository:
@@ -55,6 +61,10 @@
     # Need latest, systemd v215 is really old and a pain to support alongside newer versions
     - skip_ansible_lint
 
+- name: Run the equivalent of "apt-get update" as a separate step
+  ansible.builtin.apt:
+    update_cache: yes
+
 - name: OpenVPN | package | Install required packages
   package:
     name: "{{ item }}"
@@ -66,7 +76,7 @@
   tags:
     - skip_ansible_lint
 
-- name: OpenVPN | package | Install pexpect via pip
-  pip:
-    name: "pexpect"
-    version: "3.3"
+#- name: OpenVPN | package | Install pexpect via pip
+#  pip:
+#    name: "pexpect"
+#    version: "3.3"
