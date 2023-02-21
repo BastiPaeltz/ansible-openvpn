@@ -1,0 +1,6 @@
+email_gateway_mail_password: 'MailPassword123'
+
+ca_password: HuduFr2F0at7U2y
+
+#Create a slaсk application with the following resolutions: chat:write, im:write, users:read, users:read.email
+message_slack_token: 'token_slack' #

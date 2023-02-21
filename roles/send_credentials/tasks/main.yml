@@ -1,7 +1,7 @@
 ---
 - name: OpenVPN | Send Credentials | send message in slack for new user
   include_role:
-    name: "./../../../send-message-slack"
+    name: "send-message-slack"
   vars:
     email: "{{ client_to_add }}"
     text: >
@@ -67,7 +67,7 @@
 
 - name: OpenVPN | Send Credentials | send message clients in slack
   include_role:
-    name: "./../../../send-message-slack"
+    name: "send-message-slack"
   vars:
     email: "{{ client_to_add }}"
     text: >

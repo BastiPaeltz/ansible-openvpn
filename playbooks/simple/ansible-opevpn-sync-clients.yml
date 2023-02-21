@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  collections:
+    - moneff.ansible_openvpn
+  roles:
+   - "moneff.ansible_openvpn.sync_clients"

@@ -1,0 +1,12 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  collections:
+    - moneff.ansible_openvpn
+  pre_tasks:
+    - name: OpenVPN | install | Install recomend library
+      setup:
+
+  roles:
+   - "moneff.ansible_openvpn.openvpn"

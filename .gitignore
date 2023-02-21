@@ -1,6 +1,5 @@
 fetched_creds
 *.retry
-/inventories
 test/host_vars
 test/group_vars
 test/docker-inventory
@@ -18,3 +17,6 @@ test/docker-inventory
 
 # Ansible
 ansible/.vault_pass
+
+#IDE dev
+.idea
